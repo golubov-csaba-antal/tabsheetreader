@@ -3,6 +3,7 @@ package com.zappyware.tabsheetreader
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zappyware.tabsheetreader.core.data.FileVersion
+import com.zappyware.tabsheetreader.core.data.Lyrics
 import com.zappyware.tabsheetreader.core.data.SongInfo
 import com.zappyware.tabsheetreader.core.data.Track
 import com.zappyware.tabsheetreader.core.reader.IFileReader
@@ -29,12 +30,16 @@ class MainViewModel @Inject constructor(
     private val _tracks = MutableStateFlow<List<Track>>(emptyList())
     val tracks: StateFlow<List<Track>> = _tracks.asStateFlow()
 
+    private val _lyrics = MutableStateFlow<Lyrics?>(null)
+    val lyrics: StateFlow<Lyrics?> = _lyrics.asStateFlow()
+
     fun openFile(inputStream: InputStream) {
         viewModelScope.launch(Dispatchers.IO) {
             inputStream.use {
                 val song = fileReader.readSong(it)
                 _fileVersion.emit(song.fileVersion)
                 _songInfo.emit(song.songInfo)
+                _lyrics.emit(song.lyrics)
                 _tracks.emit(song.tracks)
             }
         }
