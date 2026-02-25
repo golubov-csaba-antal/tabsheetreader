@@ -1,3 +1,5 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
     repositories {
         google {
@@ -22,5 +24,10 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Tab Sheet Reader"
+rootProject.name = "TabSheetReader"
+
+// App
 include(":app")
+
+// Core
+include(":core:reader")
