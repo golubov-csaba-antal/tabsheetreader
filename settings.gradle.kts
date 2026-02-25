@@ -31,3 +31,4 @@ include(":app")
 
 // Core
 include(":core:reader")
+include(":core:data")

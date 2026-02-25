@@ -72,5 +72,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Modules
+    implementation(projects.core.data)
     implementation(projects.core.reader)
 }

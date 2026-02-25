@@ -1,11 +1,9 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.hilt)
-    id("com.google.devtools.ksp")
 }
 
 android {
-    namespace = "com.zappyware.tabsheetreader.core.reader"
+    namespace = "com.zappyware.tabsheetreader.core.data"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -14,6 +12,9 @@ android {
 
     defaultConfig {
         minSdk = 24
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -32,22 +33,10 @@ android {
 }
 
 dependencies {
-    // Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-
-    // Hilt
-    implementation(libs.hilt.android)
-    implementation(libs.hilt.navigation.compose)
-
-    // KSP
-    ksp(libs.hilt.compiler)
-
-    // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-
-    // Module
-    implementation(projects.core.data)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
