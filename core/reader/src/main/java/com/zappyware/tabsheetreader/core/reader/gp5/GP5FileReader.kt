@@ -1,13 +1,18 @@
 package com.zappyware.tabsheetreader.core.reader.gp5
 
+import com.zappyware.tabsheetreader.core.data.Color
 import com.zappyware.tabsheetreader.core.data.DirectionSign
 import com.zappyware.tabsheetreader.core.data.Directions
+import com.zappyware.tabsheetreader.core.data.Duration
 import com.zappyware.tabsheetreader.core.data.Equalizer
 import com.zappyware.tabsheetreader.core.data.FileVersion
 import com.zappyware.tabsheetreader.core.data.Key
+import com.zappyware.tabsheetreader.core.data.KeySignatures
 import com.zappyware.tabsheetreader.core.data.Lyrics
 import com.zappyware.tabsheetreader.core.data.LyricsSequence
+import com.zappyware.tabsheetreader.core.data.Marker
 import com.zappyware.tabsheetreader.core.data.MasterEffect
+import com.zappyware.tabsheetreader.core.data.MeasureHeader
 import com.zappyware.tabsheetreader.core.data.MidiChannel
 import com.zappyware.tabsheetreader.core.data.MidiChannels
 import com.zappyware.tabsheetreader.core.data.Octave
@@ -15,8 +20,14 @@ import com.zappyware.tabsheetreader.core.data.Page
 import com.zappyware.tabsheetreader.core.data.Song
 import com.zappyware.tabsheetreader.core.data.SongInfo
 import com.zappyware.tabsheetreader.core.data.Tempo
+import com.zappyware.tabsheetreader.core.data.TimeSignature
 import com.zappyware.tabsheetreader.core.data.Track
 import com.zappyware.tabsheetreader.core.data.TrackType
+import com.zappyware.tabsheetreader.core.data.TripletFeel
+import com.zappyware.tabsheetreader.core.data.Tuplet
+import com.zappyware.tabsheetreader.core.data.defaultBeams
+import com.zappyware.tabsheetreader.core.data.findKeySignatures
+import com.zappyware.tabsheetreader.core.data.findTripletFeel
 import com.zappyware.tabsheetreader.core.data.hasMasterEffect
 import com.zappyware.tabsheetreader.core.reader.IFileReader
 import com.zappyware.tabsheetreader.core.reader.clean
@@ -30,10 +41,14 @@ import com.zappyware.tabsheetreader.core.reader.readIntSizeString
 import com.zappyware.tabsheetreader.core.reader.toChannelValue
 import java.io.InputStream
 import javax.inject.Inject
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 class GP5FileReader @Inject constructor(): IFileReader {
 
     private var hasMasterEffect = false
+
+    private var measureCount = 0
 
     override suspend fun readSong(inputStream: InputStream): Song =
         Song(
@@ -48,8 +63,9 @@ class GP5FileReader @Inject constructor(): IFileReader {
             midiChannels = readMidiChannels(inputStream),
             directions = readDirections(inputStream),
             masterReverb = inputStream.readI32(),
-            measureCount = inputStream.readI32(),
+            measureCount = inputStream.readI32().also { measureCount = it },
             tracksCount = inputStream.readI32(),
+            measureHeaders = readMeasureHeaders(inputStream),
             // Faking tracks to test the NavigationBar
             tracks = TrackType.entries.mapIndexed { index, type -> Track(index.toLong(), type.name, type) },
         )
@@ -184,4 +200,63 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 DirectionSign.DA_DOUBLE_CODA to inputStream.readI16()
             )
         )
+
+    private fun readMeasureHeaders(inputStream: InputStream): List<MeasureHeader> {
+        var measureIndex = 1
+        var flags: Int
+        var previousHeader: MeasureHeader? = null
+        var lastRepeatOpenHeader: MeasureHeader? = null
+        return List(measureCount + 1) {
+            flags = inputStream.read()
+            MeasureHeader(
+                number = measureIndex,
+                start = 0,
+                timeSignature = TimeSignature(
+                    numerator = if (flags and 0x01 == 0x01) inputStream.read() else (previousHeader?.timeSignature?.numerator ?: 0),
+                    denominator = Duration(
+                        value = if (flags and 0x02 == 0x02) inputStream.read() else (previousHeader?.timeSignature?.denominator?.value ?: 0),
+                        isDotted = false,
+                        tuplet = Tuplet(1, 1),
+                    ),
+                ),
+                isRepeatOpen = flags and 0x04 == 0x04,
+                hasDoubleBar = flags and 0x80 == 0x80,
+                repeatClose = if (flags and 0x08 == 0x08) inputStream.read() else 0,
+                marker = if (flags and 0x20 == 0x20) readMarker(inputStream) else null,
+                keySignature = if (flags and 0x40 == 0x40) findKeySignatures(inputStream.read(), inputStream.read()) else (previousHeader?.keySignature ?: KeySignatures.CMajor),
+                repeatAlternative = if (flags and 0x10 == 0x10) readRepeatAlternative(inputStream, lastRepeatOpenHeader) else 0,
+                beams = if (flags and 0x03 == 0x03) listOf(inputStream.read(), inputStream.read(), inputStream.read(), inputStream.read()) else previousHeader?.beams ?: defaultBeams,
+                tripletFeel = (if (flags and 0x10 == 0) inputStream.skip(1) else Unit).let { findTripletFeel(inputStream.read()) },
+            ).also {
+                measureIndex++
+                previousHeader = it
+                if (it.isRepeatOpen) lastRepeatOpenHeader = it
+                inputStream.skip(1)
+            }
+        }
+    }
+
+    private fun readRepeatAlternative(inputStream: InputStream, repeatOpenHeader: MeasureHeader?): Int {
+        val value = inputStream.read()
+        var existingAlternatives = 0
+        repeatOpenHeader?.let {
+            existingAlternatives = 0.or(it.repeatAlternative)
+        }
+        return ((1 shl value) - 1f).pow(existingAlternatives).roundToInt()
+    }
+
+    private fun readMarker(inputStream: InputStream): Marker =
+        Marker(
+            title = inputStream.readIByteSizeString(),
+            color = readColor(inputStream),
+        )
+
+    private fun readColor(inputStream: InputStream): Color =
+        Color(
+            red = inputStream.read(),
+            green = inputStream.read(),
+            blue = inputStream.read(),
+        ).also {
+            inputStream.skip(1)
+        }
 }

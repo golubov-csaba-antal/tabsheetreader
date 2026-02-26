@@ -15,4 +15,5 @@ data class Song(
     val masterReverb: Int,
     val measureCount: Int,
     val tracksCount: Int,
+    val measureHeaders: List<MeasureHeader>,
 )
