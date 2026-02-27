@@ -233,7 +233,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 if (it.isRepeatOpen) lastRepeatOpenHeader = it
                 inputStream.skip(1)
             }
-        }
+        }.dropLast(1)
     }
 
     private fun readRepeatAlternative(inputStream: InputStream, repeatOpenHeader: MeasureHeader?): Int {

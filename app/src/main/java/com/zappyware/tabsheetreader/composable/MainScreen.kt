@@ -1,13 +1,11 @@
 package com.zappyware.tabsheetreader.composable
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zappyware.tabsheetreader.MainViewModel
 import com.zappyware.tabsheetreader.R
@@ -17,7 +15,7 @@ import com.zappyware.tabsheetreader.composable.sheet.SongInfo
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val resources = LocalResources.current
 
@@ -29,7 +27,7 @@ fun MainScreen(
     }
 
     Column(
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 0.dp)
+        modifier = modifier
     ) {
         fileVersion?.let { fileVersion ->
             FileVersion(

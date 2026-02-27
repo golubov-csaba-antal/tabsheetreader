@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,7 +44,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             TabSheetReaderTheme {
-                val backStack = remember { mutableStateListOf<Any>(Info) }
+                val backStack = rememberSaveable { mutableStateListOf<Any>(Info) }
 
                 val mainViewModel: MainViewModel = hiltViewModel()
 
@@ -54,7 +55,12 @@ class MainActivity : ComponentActivity() {
                             title = "Tab Sheet Reader",
                             actions = {
                                 IconButton(
-                                    onClick =  { backStack.add(Info) }
+                                    onClick =  {
+                                        if (backStack.size > 1) {
+                                            backStack.removeLastOrNull()
+                                        }
+                                        backStack.add(Info)
+                                    }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Outlined.Info,
@@ -64,7 +70,12 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 IconButton(
-                                    onClick =  { backStack.add(Lyrics) }
+                                    onClick =  {
+                                        if (backStack.size > 1) {
+                                            backStack.removeLastOrNull()
+                                        }
+                                        backStack.add(Lyrics)
+                                    }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Outlined.Menu,
@@ -94,13 +105,13 @@ class MainActivity : ComponentActivity() {
                             entry<Info> {
                                 MainScreen(
                                     viewModel = mainViewModel,
-                                    modifier = Modifier.padding(innerPadding)
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp),
                                 )
                             }
                             entry<Lyrics> {
                                 Lyrics(
                                     viewModel = mainViewModel,
-                                    modifier = Modifier.padding(innerPadding)
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp),
                                 )
                             }
                             entry<Track> {
@@ -108,7 +119,6 @@ class MainActivity : ComponentActivity() {
                                     viewModel = mainViewModel,
                                     trackId = it.trackId,
                                     trackType = it.trackType,
-                                    modifier = Modifier.padding(innerPadding)
                                 )
                             }
                         },

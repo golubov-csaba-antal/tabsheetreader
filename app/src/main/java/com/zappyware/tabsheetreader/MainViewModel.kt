@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zappyware.tabsheetreader.core.data.FileVersion
 import com.zappyware.tabsheetreader.core.data.Lyrics
+import com.zappyware.tabsheetreader.core.data.MeasureHeader
 import com.zappyware.tabsheetreader.core.data.SongInfo
 import com.zappyware.tabsheetreader.core.data.Track
 import com.zappyware.tabsheetreader.core.reader.IFileReader
@@ -33,6 +34,9 @@ class MainViewModel @Inject constructor(
     private val _lyrics = MutableStateFlow<Lyrics?>(null)
     val lyrics: StateFlow<Lyrics?> = _lyrics.asStateFlow()
 
+    private val _measureHeaders = MutableStateFlow<List<MeasureHeader>>(emptyList())
+    val measureHeaders: StateFlow<List<MeasureHeader>> = _measureHeaders.asStateFlow()
+
     fun openFile(inputStream: InputStream) {
         viewModelScope.launch(Dispatchers.IO) {
             inputStream.use {
@@ -41,6 +45,7 @@ class MainViewModel @Inject constructor(
                 _songInfo.emit(song.songInfo)
                 _lyrics.emit(song.lyrics)
                 _tracks.emit(song.tracks)
+                _measureHeaders.emit(song.measureHeaders)
             }
         }
     }
