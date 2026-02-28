@@ -26,6 +26,10 @@ fun TrackScreen(
 ) {
     val headers by viewModel.measureHeaders.collectAsStateWithLifecycle()
 
+    val tracks by viewModel.tracks.collectAsStateWithLifecycle()
+
+    val selectedTrack = tracks.getOrNull(selectedTrackIndex)
+
     val displayMoreCells = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
     if (headers.isEmpty()) {
@@ -45,7 +49,7 @@ fun TrackScreen(
                     timeSignature = it.timeSignature,
                     isFirstMeasure = it.number == 1,
                     isLastMeasure = it.number == headers.size,
-                    stringCount = 6,
+                    stringCount = selectedTrack?.stringCount ?: DEFAULT_STRING_COUNT,
                     modifier = Modifier.aspectRatio(1.77f, false),
                     typography = MeasureTypography.getTypography(windowSizeClass)
                 )
@@ -53,3 +57,5 @@ fun TrackScreen(
         }
     }
 }
+
+private const val DEFAULT_STRING_COUNT = 6
