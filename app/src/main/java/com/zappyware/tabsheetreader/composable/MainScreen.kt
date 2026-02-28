@@ -23,7 +23,7 @@ fun MainScreen(
     val songInfo by viewModel.songInfo.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.openFile(resources.openRawResource(R.raw.tab))
+        viewModel.openFile(resources.openRawResource(R.raw.links))
     }
 
     Column(

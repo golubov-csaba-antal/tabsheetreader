@@ -20,7 +20,7 @@ import com.zappyware.tabsheetreader.ui.theme.MeasureTypography
 @Composable
 fun TrackScreen(
     viewModel: MainViewModel,
-    trackIndex: Int,
+    selectedTrackIndex: Int,
     modifier: Modifier = Modifier,
     windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
 ) {
