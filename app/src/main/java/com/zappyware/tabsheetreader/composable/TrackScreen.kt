@@ -15,14 +15,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.zappyware.tabsheetreader.MainViewModel
 import com.zappyware.tabsheetreader.composable.sheet.Measure
-import com.zappyware.tabsheetreader.core.data.TrackType
 import com.zappyware.tabsheetreader.ui.theme.MeasureTypography
 
 @Composable
 fun TrackScreen(
     viewModel: MainViewModel,
-    trackId: Long,
-    trackType: TrackType,
+    trackIndex: Int,
     modifier: Modifier = Modifier,
     windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
 ) {

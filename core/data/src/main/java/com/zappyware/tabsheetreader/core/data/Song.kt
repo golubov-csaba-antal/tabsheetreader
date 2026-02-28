@@ -4,7 +4,6 @@ data class Song(
     val fileVersion: FileVersion,
     val songInfo: SongInfo,
     val lyrics: Lyrics,
-    val tracks: List<Track>,
     val masterEffect: MasterEffect?,
     val page: Page,
     val tempo: Tempo,
@@ -16,4 +15,5 @@ data class Song(
     val measureCount: Int,
     val tracksCount: Int,
     val measureHeaders: List<MeasureHeader>,
+    val tracks: List<Track>,
 )

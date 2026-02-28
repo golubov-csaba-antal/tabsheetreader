@@ -33,7 +33,7 @@ fun TrackBar(
     ) {
         tracks.forEachIndexed { index, track ->
             val navIndex = index + 1
-            val route = Track(track.id, track.trackType)
+            val route = Track(track.number, track.name)
 
             NavigationBarItem(
                 selected = selectedIndex == navIndex,
@@ -44,12 +44,12 @@ fun TrackBar(
                 },
                 icon = {
                     Icon(
-                        imageVector = ImageVector.vectorResource(track.trackType.iconRes),
-                        contentDescription = track.title,
+                        imageVector = ImageVector.vectorResource(R.drawable.ic_tracktype_guitar_electric),
+                        contentDescription = track.name,
                     )
                 },
                 label = {
-                    Text(text = track.trackType.label)
+                    Text(text = track.name)
                 }
             )
         }

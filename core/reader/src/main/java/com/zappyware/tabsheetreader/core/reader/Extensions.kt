@@ -46,12 +46,12 @@ fun InputStream.readByteSizeString(count: Int): String {
     val size = read()
     val bytes = ByteArray(count)
     read(bytes, 0, count)
-    return if(size == 1 && bytes[0] == 0.toByte()) "" else String(bytes, 0, size)
+    return if(count == 0 || size <= 0 || size == 1 && bytes[0] == 0.toByte()) "" else String(bytes, 0, size)
 }
 
 fun InputStream.readIByteSizeString(): String {
-    val size = readI32() - 1
-    return readByteSizeString(size)
+    val size = readI32()
+    return readByteSizeString(max(size - 1, 0))
 }
 
 fun InputStream.readIntSizeString(): String {
