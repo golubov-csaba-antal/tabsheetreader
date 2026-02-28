@@ -191,8 +191,8 @@ class GP5FileReader @Inject constructor(): IFileReader {
 
     private fun readMidiChannel(inputStream: InputStream): MidiChannel =
         MidiChannel(
-            channel = inputStream.readI32() - 1,
-            effectChannel = inputStream.readI32() - 1,
+            channel = inputStream.readI32(),
+            effectChannel = inputStream.readI32(),
         )
 
     private fun readDirections(inputStream: InputStream): Directions =

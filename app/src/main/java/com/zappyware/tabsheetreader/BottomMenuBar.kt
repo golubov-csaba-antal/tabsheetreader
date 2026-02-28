@@ -1,9 +1,8 @@
 package com.zappyware.tabsheetreader
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
@@ -11,11 +10,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
+import com.zappyware.tabsheetreader.composable.common.iconResource
 import com.zappyware.tabsheetreader.navigation.Info
 import com.zappyware.tabsheetreader.navigation.Lyrics
 import com.zappyware.tabsheetreader.navigation.Track
@@ -28,6 +30,14 @@ fun BottomMenuBar(
     selectedTrackIndex: Int,
 ) {
     val tracks by viewModel.tracks.collectAsStateWithLifecycle()
+    val selectedTrack = tracks.getOrNull(selectedTrackIndex)
+
+    val color = if (isSystemInDarkTheme()) {
+        Color.White
+    } else {
+        Color.Black
+    }
+    val colorFilter = ColorFilter.tint(color)
 
     NavigationBar(
         windowInsets = NavigationBarDefaults.windowInsets,
@@ -38,10 +48,15 @@ fun BottomMenuBar(
                 onSelectedMenuIndexChanged(Track, 1)
             },
             icon = {
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_tracktype_guitar_electric),
-                    contentDescription = null,
-                    modifier = Modifier
+                Image(
+                    painter = painterResource(selectedTrack?.iconResource ?: R.drawable.unknown),
+                    contentDescription = if (tracks.isEmpty()) {
+                        "No tracks"
+                    } else {
+                        tracks[selectedTrackIndex].name
+                    },
+                    modifier = Modifier.size(24.dp),
+                    colorFilter = colorFilter,
                 )
             },
             label = {
@@ -52,7 +67,7 @@ fun BottomMenuBar(
                         tracks[selectedTrackIndex].name
                     },
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
+                    maxLines = 1,
                 )
             },
         )
@@ -62,14 +77,18 @@ fun BottomMenuBar(
                 onSelectedMenuIndexChanged(Info, 2)
             },
             icon = {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
+                Image(
+                    painter = painterResource(R.drawable.info),
                     contentDescription = null,
-                    modifier = Modifier
+                    modifier = Modifier.size(24.dp),
+                    colorFilter = colorFilter,
                 )
             },
             label = {
-                Text(text = "Song info")
+                Text(
+                    text = "Song info",
+                    color = color,
+                )
             },
         )
         NavigationBarItem(
@@ -78,14 +97,18 @@ fun BottomMenuBar(
                 onSelectedMenuIndexChanged(Lyrics, 3)
             },
             icon = {
-                Icon(
-                    imageVector = Icons.Outlined.Menu,
+                Image(
+                    painter = painterResource(R.drawable.lyrics),
                     contentDescription = null,
-                    modifier = Modifier
+                    modifier = Modifier.size(24.dp),
+                    colorFilter = colorFilter,
                 )
             },
             label = {
-                Text(text = "Lyrics")
+                Text(
+                    text = "Lyrics",
+                    color = color,
+                )
             },
         )
     }
