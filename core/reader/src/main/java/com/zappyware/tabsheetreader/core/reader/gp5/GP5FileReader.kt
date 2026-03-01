@@ -43,6 +43,7 @@ import com.zappyware.tabsheetreader.core.reader.readI8
 import com.zappyware.tabsheetreader.core.reader.readIByteSizeString
 import com.zappyware.tabsheetreader.core.reader.readIntSizeString
 import com.zappyware.tabsheetreader.core.reader.toChannelValue
+import com.zappyware.tabsheetreader.core.reader.toRepeatAlternatives
 import java.io.InputStream
 import javax.inject.Inject
 import kotlin.math.pow
@@ -223,7 +224,8 @@ class GP5FileReader @Inject constructor(): IFileReader {
     private fun readMeasureHeaders(inputStream: InputStream): List<MeasureHeader> {
         var flags: Int
         var previousHeader: MeasureHeader? = null
-        var lastRepeatOpenHeader: MeasureHeader? = null
+        var currentTimeSignature: TimeSignature? = null
+        var previousTimeSignature: TimeSignature? = null
         return List(measureCount) { index ->
             flags = inputStream.read()
             MeasureHeader(
@@ -236,30 +238,22 @@ class GP5FileReader @Inject constructor(): IFileReader {
                         isDotted = false,
                         tuplet = Tuplet(1, 1),
                     ),
-                ),
+                ).also { currentTimeSignature = it },
+                timeSignatureChanged = previousTimeSignature?.numerator != currentTimeSignature?.numerator && previousTimeSignature?.denominator?.value != currentTimeSignature?.denominator?.value,
                 isRepeatOpen = flags and 0x04 == 0x04,
                 hasDoubleBar = flags and 0x80 == 0x80,
                 repeatClose = if (flags and 0x08 == 0x08) inputStream.read() else 0,
                 marker = if (flags and 0x20 == 0x20) readMarker(inputStream) else null,
                 keySignature = if (flags and 0x40 == 0x40) findKeySignatures(inputStream.read(), inputStream.read()) else (previousHeader?.keySignature ?: KeySignatures.CMajor),
-                repeatAlternative = if (flags and 0x10 == 0x10) readRepeatAlternative(inputStream, lastRepeatOpenHeader) else 0,
+                repeatAlternatives = if (flags and 0x10 == 0x10) inputStream.read().toRepeatAlternatives() else null,
                 beams = if (flags and 0x03 == 0x03) listOf(inputStream.read(), inputStream.read(), inputStream.read(), inputStream.read()) else previousHeader?.beams ?: defaultBeams,
                 tripletFeel = (if (flags and 0x10 == 0) inputStream.skip(1) else Unit).let { findTripletFeel(inputStream.read()) },
             ).also {
                 previousHeader = it
-                if (it.isRepeatOpen) lastRepeatOpenHeader = it
+                previousTimeSignature = it.timeSignature
                 inputStream.skip(1)
             }
         }
-    }
-
-    private fun readRepeatAlternative(inputStream: InputStream, repeatOpenHeader: MeasureHeader?): Int {
-        val value = inputStream.read()
-        var existingAlternatives = 0
-        repeatOpenHeader?.let {
-            existingAlternatives = 0.or(it.repeatAlternative)
-        }
-        return ((1 shl value) - 1f).pow(existingAlternatives).roundToInt()
     }
 
     private fun readMarker(inputStream: InputStream): Marker =

@@ -33,6 +33,13 @@ object MeasureTypography {
             lineHeight = 44.sp,
             letterSpacing = 0.sp
         ),
+        labelSmall = TextStyle(
+            fontFamily = FontFamily.Default,
+            fontWeight = FontWeight.Normal,
+            fontSize = 8.sp,
+            lineHeight = 8.sp,
+            letterSpacing = 0.sp
+        ),
     )
 
     private val largeDeviceTypography = Typography(
@@ -48,6 +55,13 @@ object MeasureTypography {
             fontWeight = FontWeight.Bold,
             fontSize = 30.sp,
             lineHeight = 60.sp,
+            letterSpacing = 0.sp
+        ),
+        labelSmall = TextStyle(
+            fontFamily = FontFamily.Default,
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp,
+            lineHeight = 44.sp,
             letterSpacing = 0.sp
         ),
     )
