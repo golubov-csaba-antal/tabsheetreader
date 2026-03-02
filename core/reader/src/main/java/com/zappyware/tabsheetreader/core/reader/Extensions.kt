@@ -3,6 +3,7 @@ package com.zappyware.tabsheetreader.core.reader
 import java.io.InputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
+import java.lang.Integer.numberOfTrailingZeros
 import java.nio.ByteBuffer
 
 fun InputStream.readBoolean(): Boolean {
@@ -67,48 +68,30 @@ fun String.clean(): String =
 fun Int.toChannelValue(): Int =
     min(max((this shl 3) - 1, -1), 32767) + 1
 
-fun Int.toRepeatAlternatives(): String? {
-    // shortcut to handle 0 without any further processing
-    if (this == 0) return null
-    // make an 8-long string representation of the bits
-    // then reverse it to get the correct order
-    // e.g. 7 is 00000111, it'll be reversed to 11100000
-    // because the 1st, 2nd and 3rd repeat ordinal is set
-    val string = toString(2)
-        .padStart(8, '0')
-        .reversed()
-    // we have to get all the bits' index where 1 is set
-    // and convert index to the ordinal number which starts from 1
-    val repeatIndicies = string.toCharArray()
-        .mapIndexed { index, ch -> if (ch == '1') index + 1 else null }
-        .filterNotNull()
-    // if no ordinal number is set (=the bits weren't set), return null
-    // the shortcut above handles it, but I leave this here just in case
-    if(repeatIndicies.isEmpty()) return null
-    // otherwise, we need to convert the consequent numbers to ranges
-    // or add any non-consequent number separated with a comma
-    // e.g.
-    // [1] will be converted to "1"
-    // [1, 2] will be converted to "1-2"
-    // [1, 2, 3] will be converted to "1-3"
-    // [1, 2, 3, 7] will be converted to "1-3, 7"
-    return repeatIndicies
-        .fold("") { acc, i ->
-            if (acc.isEmpty()) {
-                // first number is just returned
-                "$i"
-            } else if (acc.last().digitToInt() + 1 == i) {
-                // this is a consequent number!
-                if (acc.getOrNull(acc.count() - 2) != '-') {
-                    // the consequent number attached to make a range
-                    "$acc-$i"
-                } else {
-                    // or any further consequent number is added into the range's end
-                    acc.dropLast(1) + "$i"
-                }
+fun Int.toRepeatAlternatives(): String? =
+    if (this == 0) null
+    else buildString {
+        var mask = this@toRepeatAlternatives
+        while (mask != 0) {
+            // Find the index of the rightmost set bit (0-indexed)
+            val startBit = numberOfTrailingZeros(mask)
+            val start = startBit + 1
+
+            // Find the length of the consecutive run of set bits
+            // shifted.inv() will have 0s where 'mask' had 1s. 
+            // trailingZeros of that gives the length of the run of 1s.
+            val shifted = mask ushr startBit
+            val runLength = numberOfTrailingZeros(shifted.inv())
+            val end = startBit + runLength
+
+            if (isNotEmpty()) append(", ")
+            if (runLength == 1) {
+                append(start)
             } else {
-                // any non-consequent number is attached with a comma
-                "$acc, $i"
+                append(start).append('-').append(end)
             }
+
+            // Clear the processed bits.
+            mask = if (end >= 32) 0 else (mask ushr end) shl end
         }
-    }
+    }.ifEmpty { null }
