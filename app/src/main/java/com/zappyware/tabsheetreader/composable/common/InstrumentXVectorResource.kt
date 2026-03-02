@@ -1,9 +1,9 @@
 package com.zappyware.tabsheetreader.composable.common
 
 import com.zappyware.tabsheetreader.R
-import com.zappyware.tabsheetreader.core.data.InstrumentCategory
-import com.zappyware.tabsheetreader.core.data.Instruments
-import com.zappyware.tabsheetreader.core.data.Track
+import com.zappyware.tabsheetreader.core.data.song.track.InstrumentCategory
+import com.zappyware.tabsheetreader.core.data.song.track.Instruments
+import com.zappyware.tabsheetreader.core.data.song.track.Track
 
 val Track.iconResource: Int get() {
     if (isPercussionTrack) return R.drawable.drum

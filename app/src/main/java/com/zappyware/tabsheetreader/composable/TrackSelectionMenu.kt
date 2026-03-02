@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zappyware.tabsheetreader.MainViewModel
 import com.zappyware.tabsheetreader.composable.common.iconResource
-import com.zappyware.tabsheetreader.core.data.Instruments
+import com.zappyware.tabsheetreader.core.data.song.track.Instruments
 
 @Composable
 fun TrackSelectionMenu(

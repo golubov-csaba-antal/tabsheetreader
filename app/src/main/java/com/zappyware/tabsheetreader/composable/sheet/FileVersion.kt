@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zappyware.tabsheetreader.composable.common.Attribute
-import com.zappyware.tabsheetreader.core.data.FileVersion
+import com.zappyware.tabsheetreader.core.data.song.FileVersion
 
 @Composable
 fun FileVersion(

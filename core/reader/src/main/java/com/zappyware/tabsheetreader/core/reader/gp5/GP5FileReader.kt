@@ -1,38 +1,43 @@
 package com.zappyware.tabsheetreader.core.reader.gp5
 
-import com.zappyware.tabsheetreader.core.data.Color
-import com.zappyware.tabsheetreader.core.data.DirectionSign
-import com.zappyware.tabsheetreader.core.data.Directions
-import com.zappyware.tabsheetreader.core.data.Duration
-import com.zappyware.tabsheetreader.core.data.Equalizer
-import com.zappyware.tabsheetreader.core.data.FileVersion
-import com.zappyware.tabsheetreader.core.data.GuitarString
-import com.zappyware.tabsheetreader.core.data.Instrument
-import com.zappyware.tabsheetreader.core.data.Key
-import com.zappyware.tabsheetreader.core.data.KeySignatures
-import com.zappyware.tabsheetreader.core.data.Lyrics
-import com.zappyware.tabsheetreader.core.data.LyricsSequence
-import com.zappyware.tabsheetreader.core.data.Marker
-import com.zappyware.tabsheetreader.core.data.MasterEffect
-import com.zappyware.tabsheetreader.core.data.MeasureHeader
-import com.zappyware.tabsheetreader.core.data.MidiChannel
-import com.zappyware.tabsheetreader.core.data.MidiChannels
-import com.zappyware.tabsheetreader.core.data.Octave
-import com.zappyware.tabsheetreader.core.data.Page
+import com.zappyware.tabsheetreader.core.data.song.Color
+import com.zappyware.tabsheetreader.core.data.song.Directions
+import com.zappyware.tabsheetreader.core.data.song.Equalizer
+import com.zappyware.tabsheetreader.core.data.song.FileVersion
+import com.zappyware.tabsheetreader.core.data.song.track.Instrument
+import com.zappyware.tabsheetreader.core.data.song.Key
+import com.zappyware.tabsheetreader.core.data.song.measure.LineBreak
+import com.zappyware.tabsheetreader.core.data.song.Lyrics
+import com.zappyware.tabsheetreader.core.data.song.LyricsSequence
+import com.zappyware.tabsheetreader.core.data.song.MasterEffect
+import com.zappyware.tabsheetreader.core.data.song.MidiChannel
+import com.zappyware.tabsheetreader.core.data.song.MidiChannels
+import com.zappyware.tabsheetreader.core.data.song.Octave
+import com.zappyware.tabsheetreader.core.data.song.Page
 import com.zappyware.tabsheetreader.core.data.Song
-import com.zappyware.tabsheetreader.core.data.SongInfo
-import com.zappyware.tabsheetreader.core.data.Tempo
-import com.zappyware.tabsheetreader.core.data.TimeSignature
-import com.zappyware.tabsheetreader.core.data.Track
-import com.zappyware.tabsheetreader.core.data.TrackEffect
-import com.zappyware.tabsheetreader.core.data.TrackSettings
-import com.zappyware.tabsheetreader.core.data.Tuplet
-import com.zappyware.tabsheetreader.core.data.defaultBeams
-import com.zappyware.tabsheetreader.core.data.findAccentuation
-import com.zappyware.tabsheetreader.core.data.findKeySignatures
-import com.zappyware.tabsheetreader.core.data.findTripletFeel
-import com.zappyware.tabsheetreader.core.data.hasMasterEffect
-import com.zappyware.tabsheetreader.core.data.isVersion5_0_0
+import com.zappyware.tabsheetreader.core.data.song.SongInfo
+import com.zappyware.tabsheetreader.core.data.song.Tempo
+import com.zappyware.tabsheetreader.core.data.song.header.Tuplet
+import com.zappyware.tabsheetreader.core.data.song.hasMasterEffect
+import com.zappyware.tabsheetreader.core.data.song.header.DirectionSign
+import com.zappyware.tabsheetreader.core.data.song.header.Duration
+import com.zappyware.tabsheetreader.core.data.song.header.KeySignatures
+import com.zappyware.tabsheetreader.core.data.song.header.Marker
+import com.zappyware.tabsheetreader.core.data.song.header.MeasureHeader
+import com.zappyware.tabsheetreader.core.data.song.header.QUARTER_TIME
+import com.zappyware.tabsheetreader.core.data.song.header.TimeSignature
+import com.zappyware.tabsheetreader.core.data.song.header.defaultBeams
+import com.zappyware.tabsheetreader.core.data.song.header.findKeySignatures
+import com.zappyware.tabsheetreader.core.data.song.header.findTripletFeel
+import com.zappyware.tabsheetreader.core.data.song.isVersion5_0_0
+import com.zappyware.tabsheetreader.core.data.song.header.length
+import com.zappyware.tabsheetreader.core.data.song.measure.Measure
+import com.zappyware.tabsheetreader.core.data.song.measure.MeasureClef
+import com.zappyware.tabsheetreader.core.data.song.track.GuitarString
+import com.zappyware.tabsheetreader.core.data.song.track.Track
+import com.zappyware.tabsheetreader.core.data.song.track.TrackEffect
+import com.zappyware.tabsheetreader.core.data.song.track.TrackSettings
+import com.zappyware.tabsheetreader.core.data.song.track.findAccentuation
 import com.zappyware.tabsheetreader.core.reader.IFileReader
 import com.zappyware.tabsheetreader.core.reader.clean
 import com.zappyware.tabsheetreader.core.reader.readBoolean
@@ -46,8 +51,6 @@ import com.zappyware.tabsheetreader.core.reader.toChannelValue
 import com.zappyware.tabsheetreader.core.reader.toRepeatAlternatives
 import java.io.InputStream
 import javax.inject.Inject
-import kotlin.math.pow
-import kotlin.math.roundToInt
 
 class GP5FileReader @Inject constructor(): IFileReader {
 
@@ -58,6 +61,10 @@ class GP5FileReader @Inject constructor(): IFileReader {
     private var measureCount = 0
 
     private var tracksCount = 0
+
+    private var headers = emptyList<MeasureHeader>()
+
+    private var tracks = emptyList<Track>()
 
     override suspend fun readSong(inputStream: InputStream): Song =
         Song(
@@ -77,8 +84,9 @@ class GP5FileReader @Inject constructor(): IFileReader {
             masterReverb = inputStream.readI32(),
             measureCount = inputStream.readI32().also { measureCount = it },
             tracksCount = inputStream.readI32().also { tracksCount = it },
-            measureHeaders = readMeasureHeaders(inputStream),
-            tracks = readTracks(inputStream),
+            measureHeaders = readMeasureHeaders(inputStream).also { headers = it },
+            tracks = readTracks(inputStream).also { tracks = it },
+            measures = readMeasures(inputStream),
         )
 
     private fun readFileVersion(inputStream: InputStream): FileVersion =
@@ -223,6 +231,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
 
     private fun readMeasureHeaders(inputStream: InputStream): List<MeasureHeader> {
         var flags: Int
+        var start = QUARTER_TIME
         var previousHeader: MeasureHeader? = null
         var currentTimeSignature: TimeSignature? = null
         var previousTimeSignature: TimeSignature? = null
@@ -230,11 +239,13 @@ class GP5FileReader @Inject constructor(): IFileReader {
             flags = inputStream.read()
             MeasureHeader(
                 number = index + 1,
-                start = 0,
+                start = start,
                 timeSignature = TimeSignature(
-                    numerator = if (flags and 0x01 == 0x01) inputStream.read() else (previousHeader?.timeSignature?.numerator ?: 0),
+                    numerator = if (flags and 0x01 == 0x01) inputStream.read() else (previousHeader?.timeSignature?.numerator
+                        ?: 0),
                     denominator = Duration(
-                        value = if (flags and 0x02 == 0x02) inputStream.read() else (previousHeader?.timeSignature?.denominator?.value ?: 0),
+                        value = if (flags and 0x02 == 0x02) inputStream.read() else (previousHeader?.timeSignature?.denominator?.value
+                            ?: 0),
                         isDotted = false,
                         tuplet = Tuplet(1, 1),
                     ),
@@ -244,13 +255,27 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 hasDoubleBar = flags and 0x80 == 0x80,
                 repeatClose = if (flags and 0x08 == 0x08) inputStream.read() else 0,
                 marker = if (flags and 0x20 == 0x20) readMarker(inputStream) else null,
-                keySignature = if (flags and 0x40 == 0x40) findKeySignatures(inputStream.read(), inputStream.read()) else (previousHeader?.keySignature ?: KeySignatures.CMajor),
-                repeatAlternatives = if (flags and 0x10 == 0x10) inputStream.read().toRepeatAlternatives() else null,
-                beams = if (flags and 0x03 == 0x03) listOf(inputStream.read(), inputStream.read(), inputStream.read(), inputStream.read()) else previousHeader?.beams ?: defaultBeams,
-                tripletFeel = (if (flags and 0x10 == 0) inputStream.skip(1) else Unit).let { findTripletFeel(inputStream.read()) },
+                keySignature = if (flags and 0x40 == 0x40) findKeySignatures(
+                    inputStream.read(),
+                    inputStream.read()
+                ) else (previousHeader?.keySignature ?: KeySignatures.CMajor),
+                repeatAlternatives = if (flags and 0x10 == 0x10) inputStream.read()
+                    .toRepeatAlternatives() else null,
+                beams = if (flags and 0x03 == 0x03) listOf(
+                    inputStream.read(),
+                    inputStream.read(),
+                    inputStream.read(),
+                    inputStream.read()
+                ) else previousHeader?.beams ?: defaultBeams,
+                tripletFeel = (if (flags and 0x10 == 0) inputStream.skip(1) else Unit).let {
+                    findTripletFeel(
+                        inputStream.read()
+                    )
+                },
             ).also {
                 previousHeader = it
                 previousTimeSignature = it.timeSignature
+                start += it.length
                 inputStream.skip(1)
             }
         }
@@ -292,7 +317,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 stringCount = inputStream.readI32().also { stringCount = it },
                 strings = List(7) { index ->
                     val tuning = inputStream.readI32()
-                    if(index < stringCount) {
+                    if (index < stringCount) {
                         GuitarString(
                             number = index + 1,
                             value = tuning,
@@ -321,7 +346,9 @@ class GP5FileReader @Inject constructor(): IFileReader {
                     extendRhythmic = settingsFlags and 0x0800 == 0x0800,
                 ),
                 rse = TrackEffect(
-                    autoAccentuation = findAccentuation(inputStream.readI8()).also { inputStream.skip(1) },
+                    autoAccentuation = findAccentuation(
+                        inputStream.readI8()
+                    ).also { inputStream.skip(1) },
                     humanize = inputStream.readI8().also {
                         inputStream.readI32()
                         inputStream.readI32()
@@ -349,6 +376,23 @@ class GP5FileReader @Inject constructor(): IFileReader {
             )
         }.also {
             if (isVersion5_0_0) inputStream.skip(2) else inputStream.skip(1)
+        }
+    }
+
+    private fun readMeasures(inputStream: InputStream): List<Measure> {
+        var header: MeasureHeader
+        var track: Track
+        return List(measureCount * tracksCount) { index ->
+            header = headers[index / tracksCount]
+            track = tracks[index % tracksCount]
+
+            Measure(
+                header = header,
+                track = track,
+                clef = MeasureClef.Treble,
+                lineBreak = LineBreak.None,
+                voices = emptyList(),
+            )
         }
     }
 }

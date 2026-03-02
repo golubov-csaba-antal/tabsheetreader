@@ -1,0 +1,12 @@
+package com.zappyware.tabsheetreader.core.data.song.measure
+
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.Beat
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.VoiceDirections
+
+data class Voice(
+    val measure: Measure,
+    val beats: List<Beat>,
+    val directions: VoiceDirections,
+)
+
+fun Voice.isEmpty() = beats.isEmpty()

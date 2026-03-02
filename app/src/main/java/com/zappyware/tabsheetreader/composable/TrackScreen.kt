@@ -2,7 +2,6 @@ package com.zappyware.tabsheetreader.composable
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,7 +17,7 @@ import androidx.window.core.layout.WindowSizeClass
 import com.zappyware.tabsheetreader.MainViewModel
 import com.zappyware.tabsheetreader.composable.sheet.Measure
 import com.zappyware.tabsheetreader.composable.sheet.MeasureInfo
-import com.zappyware.tabsheetreader.core.data.tuning
+import com.zappyware.tabsheetreader.core.data.song.track.tuning
 import com.zappyware.tabsheetreader.ui.theme.MeasureTypography
 
 @Composable

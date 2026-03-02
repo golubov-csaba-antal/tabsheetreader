@@ -2,12 +2,12 @@ package com.zappyware.tabsheetreader
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zappyware.tabsheetreader.core.data.FileVersion
-import com.zappyware.tabsheetreader.core.data.Lyrics
-import com.zappyware.tabsheetreader.core.data.MeasureHeader
-import com.zappyware.tabsheetreader.core.data.SongInfo
-import com.zappyware.tabsheetreader.core.data.Tempo
-import com.zappyware.tabsheetreader.core.data.Track
+import com.zappyware.tabsheetreader.core.data.song.FileVersion
+import com.zappyware.tabsheetreader.core.data.song.Lyrics
+import com.zappyware.tabsheetreader.core.data.song.header.MeasureHeader
+import com.zappyware.tabsheetreader.core.data.song.SongInfo
+import com.zappyware.tabsheetreader.core.data.song.Tempo
+import com.zappyware.tabsheetreader.core.data.song.track.Track
 import com.zappyware.tabsheetreader.core.reader.IFileReader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

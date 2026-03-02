@@ -12,7 +12,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawMeasureHeader
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawStrings
-import com.zappyware.tabsheetreader.core.data.TimeSignature
+import com.zappyware.tabsheetreader.core.data.song.header.TimeSignature
 
 @Composable
 fun Measure(
