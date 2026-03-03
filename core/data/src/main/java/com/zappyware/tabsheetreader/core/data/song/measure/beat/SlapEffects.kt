@@ -6,3 +6,6 @@ enum class SlapEffects {
     Slapping,
     Popping,
 }
+
+fun findSlapEffect(value: Int) =
+    SlapEffects.entries.firstOrNull { it.ordinal == value } ?: SlapEffects.None

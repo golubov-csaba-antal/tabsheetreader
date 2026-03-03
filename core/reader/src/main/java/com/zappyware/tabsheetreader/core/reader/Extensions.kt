@@ -1,64 +1,92 @@
 package com.zappyware.tabsheetreader.core.reader
 
+import com.zappyware.tabsheetreader.core.data.song.Durations
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.Velocities
 import java.io.InputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
 import java.lang.Integer.numberOfTrailingZeros
-import java.nio.ByteBuffer
+import java.io.IOException
 
 fun InputStream.readBoolean(): Boolean {
-    val booleanInt = readI8()
-    return booleanInt != 0
+    return read() != 0
 }
 
-fun InputStream.readI8(): Int {
-    val size = Integer.BYTES / 4
-    val integerBytes = ByteArray(size)
-    read(integerBytes, 0, size)
-    // we need the 4-byte sized Int here to get the correct value
-    return ByteBuffer.allocate(Integer.BYTES).also {
-        it.put(integerBytes)
-        it.rewind()
-    }.getInt()
+/** Read a signed 8-bit integer (-128 to 127) */
+fun InputStream.readI8(): Int = read().toByte().toInt()
+
+/** Read an unsigned 8-bit integer (0 to 255) */
+fun InputStream.readU8(): Int = read()
+
+private fun InputStream.readFully(bytes: ByteArray, count: Int) {
+    var totalRead = 0
+    while (totalRead < count) {
+        val readCount = read(bytes, totalRead, count - totalRead)
+        if (readCount == -1) break
+        totalRead += readCount
+    }
 }
 
 fun InputStream.readI16(): Int {
-    val size = Integer.BYTES / 2
-    val integerBytes = ByteArray(size)
-    read(integerBytes, 0, size)
-    // we need the 4-byte sized Int here to get the correct value
-    return ByteBuffer.allocate(Integer.BYTES).also {
-        it.put(integerBytes.reversed().toByteArray())
-        it.rewind()
-    }.getInt()
+    val b1 = read()
+    val b2 = read()
+    if (b1 == -1 || b2 == -1) return 0
+    return ((b2 shl 8) or (b1 and 0xFF)).toShort().toInt()
 }
 
 fun InputStream.readI32(): Int {
-    val size = Integer.BYTES
-    val integerBytes = ByteArray(size)
-    read(integerBytes, 0, size)
-    return ByteBuffer.allocate(size).also {
-        it.put(integerBytes.reversed().toByteArray())
-        it.rewind()
-    }.getInt()
+    val b1 = read()
+    val b2 = read()
+    val b3 = read()
+    val b4 = read()
+    if (b1 == -1 || b2 == -1 || b3 == -1 || b4 == -1) return 0
+    return (b4 shl 24) or ((b3 and 0xFF) shl 16) or ((b2 and 0xFF) shl 8) or (b1 and 0xFF)
 }
 
+fun InputStream.readF64(): Double {
+    val b1 = read().toLong()
+    val b2 = read().toLong()
+    val b3 = read().toLong()
+    val b4 = read().toLong()
+    val b5 = read().toLong()
+    val b6 = read().toLong()
+    val b7 = read().toLong()
+    val b8 = read().toLong()
+    if (b1 == -1L || b2 == -1L || b3 == -1L || b4 == -1L || b5 == -1L || b6 == -1L || b7 == -1L || b8 == -1L) return 0.0
+    val bits = (b8 shl 56) or
+            ((b7 and 0xFF) shl 48) or
+            ((b6 and 0xFF) shl 40) or
+            ((b5 and 0xFF) shl 32) or
+            ((b4 and 0xFF) shl 24) or
+            ((b3 and 0xFF) shl 16) or
+            ((b2 and 0xFF) shl 8) or
+            (b1 and 0xFF)
+    return java.lang.Double.longBitsToDouble(bits)
+}
+
+private const val MAX_STRING_SIZE = 1_000_000 // 1MB safety limit
+
 fun InputStream.readByteSizeString(count: Int): String {
-    val size = read()
+    val actualSize = read()
+    if (count <= 0) return ""
+    if (count > MAX_STRING_SIZE) throw IOException("String size too large: $count")
+
     val bytes = ByteArray(count)
-    read(bytes, 0, count)
-    return if(count == 0 || size <= 0 || size == 1 && bytes[0] == 0.toByte()) "" else String(bytes, 0, size)
+    readFully(bytes, count)
+    return if (actualSize <= 0 || (actualSize == 1 && bytes[0] == 0.toByte())) "" else String(bytes, 0, min(actualSize, count))
 }
 
 fun InputStream.readIByteSizeString(): String {
     val size = readI32()
-    return readByteSizeString(max(size - 1, 0))
+    return if (size <= 0) "" else readByteSizeString(size - 1)
 }
 
 fun InputStream.readIntSizeString(): String {
     val size = readI32()
+    if (size <= 0) return ""
+    if (size > MAX_STRING_SIZE) throw IOException("String size too large: $size")
     val bytes = ByteArray(size)
-    read(bytes, 0, size)
+    readFully(bytes, size)
     return if(size == 1 && bytes[0] == 0.toByte()) "" else String(bytes, 0, size)
 }
 
@@ -73,13 +101,8 @@ fun Int.toRepeatAlternatives(): String? =
     else buildString {
         var mask = this@toRepeatAlternatives
         while (mask != 0) {
-            // Find the index of the rightmost set bit (0-indexed)
             val startBit = numberOfTrailingZeros(mask)
             val start = startBit + 1
-
-            // Find the length of the consecutive run of set bits
-            // shifted.inv() will have 0s where 'mask' had 1s. 
-            // trailingZeros of that gives the length of the run of 1s.
             val shifted = mask ushr startBit
             val runLength = numberOfTrailingZeros(shifted.inv())
             val end = startBit + runLength
@@ -90,8 +113,20 @@ fun Int.toRepeatAlternatives(): String? =
             } else {
                 append(start).append('-').append(end)
             }
-
-            // Clear the processed bits.
             mask = if (end >= 32) 0 else (mask ushr end) shl end
         }
     }.ifEmpty { null }
+
+fun Int.toVelocity(): Int =
+    Velocities.MIN_VELOCITY + Velocities.VELOCITY_INCREMENT * this - Velocities.VELOCITY_INCREMENT
+
+fun Int.toStroke(): Int =
+    when(this) {
+        1 -> Durations.HUNDREDTWENTYEIGHTH.value
+        2 -> Durations.SIXTYFOURTH.value
+        3 -> Durations.THIRTYSECOND.value
+        4 -> Durations.SIXTEENTH.value
+        5 -> Durations.EIGHTH.value
+        6 -> Durations.QUARTER.value
+        else -> Durations.SIXTYFOURTH.value
+    }

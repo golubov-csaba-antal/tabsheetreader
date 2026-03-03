@@ -13,3 +13,5 @@ data class BendEffect(
         val None = BendEffect()
     }
 }
+
+fun BendEffect.isEmpty() = points.isEmpty()

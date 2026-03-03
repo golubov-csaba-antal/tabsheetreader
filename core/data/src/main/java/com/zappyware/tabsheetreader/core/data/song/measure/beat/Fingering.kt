@@ -8,3 +8,5 @@ enum class Fingering(val value: Int) {
     Annular(3),
     Little(4),
 }
+
+fun findFingering(value: Int) = Fingering.entries.find { it.value == value } ?: Fingering.Open

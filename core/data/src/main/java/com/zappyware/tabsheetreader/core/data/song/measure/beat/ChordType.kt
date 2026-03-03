@@ -17,3 +17,5 @@ enum class ChordType(val value: Int) {
     Augmented(13),
     Power(14)
 }
+
+fun findChordType(value: Int) = ChordType.entries.firstOrNull { it.value == value }

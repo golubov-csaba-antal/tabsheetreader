@@ -5,14 +5,14 @@ import com.zappyware.tabsheetreader.core.data.song.measure.Voice
 
 data class Beat(
     val voice: Voice,
-    val notes: List<Note>,
-    val duration: Duration,
-    val text: String?,
-    val start: Int?,
-    val effect: BeatEffect,
-    val octaves: Octaves,
-    val display: BeatDisplay,
-    val statuses: BeatStatuses,
+    val notes: List<Note> = emptyList(),
+    val duration: Duration = Duration(),
+    val text: String? = null,
+    val start: Int? = null,
+    val effect: BeatEffect = BeatEffect(),
+    val octaves: Octaves = Octaves.None,
+    val display: BeatDisplay = BeatDisplay(),
+    val status: BeatStatuses = BeatStatuses.Empty,
 )
 
 val Beat.startInMeasure: Int? get() = start?.let { it - voice.measure.header.start }

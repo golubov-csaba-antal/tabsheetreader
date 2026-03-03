@@ -5,3 +5,6 @@ enum class LineBreak {
     Break,
     Protect,
 }
+
+fun findLineBreak(value: Int) =
+    LineBreak.entries.find { it.ordinal == value } ?: LineBreak.None

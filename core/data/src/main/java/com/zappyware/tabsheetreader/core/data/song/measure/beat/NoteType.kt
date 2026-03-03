@@ -6,3 +6,5 @@ enum class NoteType {
     Tie,
     Dead,
 }
+
+fun findNoteType(value: Int) = NoteType.entries.find { it.ordinal == value } ?: NoteType.Rest

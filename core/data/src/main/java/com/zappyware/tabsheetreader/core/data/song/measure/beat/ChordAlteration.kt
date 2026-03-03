@@ -5,3 +5,5 @@ enum class ChordAlteration {
     Diminished,
     Augmented
 }
+
+fun findChordAlteration(value: Int) = ChordAlteration.entries.firstOrNull { it.ordinal == value }

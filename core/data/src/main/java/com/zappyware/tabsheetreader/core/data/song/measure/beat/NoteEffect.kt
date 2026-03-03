@@ -18,6 +18,10 @@ data class NoteEffect(
     val trill: TrillEffect? = null,
     val vibrato: Boolean = false,
 ) {
+    companion object {
+        val DEFAULT = NoteEffect()
+    }
+
     val isBend: Boolean
         get() = bend != null && bend.points.isNotEmpty()
 
@@ -38,7 +42,7 @@ data class NoteEffect(
 
     val isDefault: Boolean
         get() {
-            val default = NoteEffect()
+            val default = DEFAULT
             return leftHandFinger == default.leftHandFinger &&
                     rightHandFinger == default.rightHandFinger &&
                     bend == default.bend &&

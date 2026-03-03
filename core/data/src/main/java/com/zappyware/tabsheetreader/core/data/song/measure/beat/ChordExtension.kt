@@ -6,3 +6,5 @@ enum class ChordExtension {
     Eleventh,
     Thirteenth
 }
+
+fun findChordExtension(value: Int) = ChordExtension.entries.firstOrNull { it.ordinal == value }

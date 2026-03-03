@@ -5,3 +5,6 @@ enum class BeatStrokeDirections {
     Up,
     Down,
 }
+
+fun findBeatStrokeDirection(direction: Int) =
+    BeatStrokeDirections.entries.find { it.ordinal == direction } ?: BeatStrokeDirections.None

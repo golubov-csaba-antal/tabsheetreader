@@ -7,14 +7,14 @@ import kotlin.math.roundToInt
 
 data class Duration(
     val value: Int = Durations.QUARTER.value,
-    val isDotted: Boolean,
-    val tuplet: Tuplet,
+    val isDotted: Boolean = false,
+    val tuplet: Tuplet = Tuplet.Default,
 )
 
 const val WHOLE_TIME = 3840
 const val QUARTER_TIME = 960
 
-val MIN_TIME = WHOLE_TIME / Durations.HUNDREDTWELFTH.value / 3
+val MIN_TIME = WHOLE_TIME / Durations.HUNDREDTWENTYEIGHTH.value / 3
 
 val Duration.time: Int get() =
     (WHOLE_TIME / value.toFloat())

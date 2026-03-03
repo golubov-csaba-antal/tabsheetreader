@@ -3,9 +3,13 @@ package com.zappyware.tabsheetreader.core.data.song.header
 import kotlin.math.roundToInt
 
 data class Tuplet(
-    val enters: Int,
-    val times: Int
-)
+    val enters: Int = 1,
+    val times: Int = 1,
+) {
+    companion object {
+        val Default = Tuplet()
+    }
+}
 
 val supportedTuples = mapOf(
     1 to 1,

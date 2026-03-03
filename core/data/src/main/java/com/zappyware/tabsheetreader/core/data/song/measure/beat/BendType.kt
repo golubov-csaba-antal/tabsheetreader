@@ -14,3 +14,6 @@ enum class BendType {
     Return,
     ReleaseDown
 }
+
+fun findBendType(value: Int): BendType =
+    BendType.entries.find { it.ordinal == value } ?: BendType.None
