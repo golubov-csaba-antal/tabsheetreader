@@ -27,7 +27,7 @@ fun TrackScreen(
     modifier: Modifier = Modifier,
     windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
 ) {
-    val headers by viewModel.measureHeaders.collectAsStateWithLifecycle()
+    val measures by viewModel.measures.collectAsStateWithLifecycle()
 
     val tempo by viewModel.tempo.collectAsStateWithLifecycle()
 
@@ -39,10 +39,12 @@ fun TrackScreen(
 
     val displayMoreCells = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
-    if (headers.isEmpty()) {
+    val trackMeasures = measures.filter { it.track == selectedTrack }
+
+    if (trackMeasures.isEmpty()) {
         Text(
             modifier = modifier,
-            text = "There were no headers in the file.",
+            text = "There were no measures in the file.",
         )
     } else {
         LazyVerticalGrid(
@@ -60,17 +62,12 @@ fun TrackScreen(
             }
             items(
                 contentType = { ITEM_TYPE_MEASURE },
-                items = headers
-            ) {
+                items = trackMeasures
+            ) { measure ->
                 Measure(
-                    measureIndex = it.number,
-                    measureTitle = it.marker?.title,
-                    timeSignature = if (it.timeSignatureChanged) it.timeSignature else null,
-                    isFirstMeasure = it.number == 1,
-                    isLastMeasure = it.number == headers.size, // numbers are in [1..size]
-                    isRepeatOpen = it.isRepeatOpen,
-                    repeatClose = it.repeatClose,
-                    repeatAlternatives = it.repeatAlternatives,
+                    measure = measure,
+                    measureCount = trackMeasures.size,
+                    selectedTrack = selectedTrack,
                     stringCount = selectedTrack?.stringCount ?: DEFAULT_STRING_COUNT,
                     modifier = Modifier.aspectRatio(1.77f, false),
                     typography = MeasureTypography.getTypography(windowSizeClass)

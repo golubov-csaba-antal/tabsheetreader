@@ -11,14 +11,14 @@ import androidx.compose.ui.text.font.FontWeight
 fun DrawScope.drawMeasureHeader(
     headerTitle: String,
     textMeasurer: TextMeasurer,
-    textSyle: TextStyle,
+    textStyle: TextStyle,
     color: Color,
 ) {
     drawText(
         textMeasurer = textMeasurer,
         text = headerTitle,
         topLeft = Offset(0f, 0f),
-        style = textSyle.copy(color = color, fontWeight = FontWeight.Bold)
+        style = textStyle.copy(color = color, fontWeight = FontWeight.Bold)
     )
 }
 

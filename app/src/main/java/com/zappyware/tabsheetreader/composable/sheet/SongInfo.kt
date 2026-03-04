@@ -5,69 +5,81 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zappyware.tabsheetreader.MainViewModel
 import com.zappyware.tabsheetreader.composable.common.Attribute
-import com.zappyware.tabsheetreader.core.data.song.SongInfo
 
 @Composable
 fun SongInfo(
-    songInfo: SongInfo,
+    viewModel: MainViewModel,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-    ) {
-        Text(
-            modifier = modifier.padding(vertical = 8.dp),
-            text = "Song info:",
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        Attribute(
-            title = "Title",
-            text = songInfo.title,
-        )
-        Attribute(
-            title = "Artist",
-            text = songInfo.artist,
-        )
-        Attribute(
-            title = "Sub-title",
-            text = songInfo.subTitle,
-        )
-        Attribute(
-            title = "Album",
-            text = songInfo.album,
-        )
-        Attribute(
-            title = "Words",
-            text = songInfo.words,
-        )
-        Attribute(
-            title = "Music",
-            text = songInfo.music,
-        )
-        Attribute(
-            title = "Copyright",
-            text = songInfo.copyright,
-        )
-        Attribute(
-            title = "Transcriber",
-            text = songInfo.tab,
-        )
+    val songInfo by viewModel.songInfo.collectAsStateWithLifecycle()
 
-        songInfo.notices.takeIf { it.isNotEmpty() }?.let { notices ->
+    songInfo?.let { info ->
+        Column(
+            modifier = modifier,
+        ) {
             Text(
-                text = "Notices",
+                modifier = modifier.padding(vertical = 8.dp),
+                text = "Song info:",
+                style = MaterialTheme.typography.headlineSmall,
             )
-            Text(
-                text = notices.joinToString(", "),
+            Attribute(
+                title = "Title",
+                text = info.title,
+            )
+            Attribute(
+                title = "Artist",
+                text = info.artist,
+            )
+            Attribute(
+                title = "Sub-title",
+                text = info.subTitle,
+            )
+            Attribute(
+                title = "Album",
+                text = info.album,
+            )
+            Attribute(
+                title = "Words",
+                text = info.words,
+            )
+            Attribute(
+                title = "Music",
+                text = info.music,
+            )
+            Attribute(
+                title = "Copyright",
+                text = info.copyright,
+            )
+            Attribute(
+                title = "Transcriber",
+                text = info.tab,
+            )
+
+            info.notices.takeIf { it.isNotEmpty() }?.let { notices ->
+                Text(
+                    text = "Notices",
+                )
+                Text(
+                    text = notices.joinToString(", "),
+                )
+            }
+
+            Attribute(
+                title = "Instructions",
+                text = info.instructions,
             )
         }
-
-        Attribute(
-            title = "Instructions",
-            text = songInfo.instructions,
+    } ?: run {
+        Text(
+            modifier = modifier,
+            text = "No further information provided.",
+            style = MaterialTheme.typography.headlineSmall,
         )
     }
 }

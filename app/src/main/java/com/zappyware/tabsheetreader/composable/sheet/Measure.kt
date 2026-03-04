@@ -2,36 +2,42 @@ package com.zappyware.tabsheetreader.composable.sheet
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import com.zappyware.tabsheetreader.composable.sheet.draw.drawBeat
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawMeasureHeader
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawStrings
-import com.zappyware.tabsheetreader.core.data.song.header.TimeSignature
+import com.zappyware.tabsheetreader.core.data.song.measure.Measure
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.NoteType
+import com.zappyware.tabsheetreader.core.data.song.track.Track
 
 @Composable
 fun Measure(
-    measureIndex: Int,
-    measureTitle: String?,
-    timeSignature: TimeSignature?,
+    measure: Measure,
+    measureCount: Int,
+    selectedTrack: Track?,
     stringCount: Int,
-    isFirstMeasure: Boolean,
-    isLastMeasure: Boolean,
-    isRepeatOpen: Boolean,
-    repeatClose: Int,
-    repeatAlternatives: String?,
     modifier: Modifier,
     typography: Typography,
 ) {
-    val headerText = if(measureTitle.isNullOrEmpty()) {
-        "$measureIndex"
-    } else {
-        "$measureIndex - $measureTitle"
+    val measureIndex = measure.header.number
+    val measureTitle = measure.header.marker?.title
+    val timeSignature = if (measure.header.timeSignatureChanged) measure.header.timeSignature else null
+    val isLastMeasure = measure.header.number == measureCount
+    val isRepeatOpen = measure.header.isRepeatOpen
+    val repeatClose = measure.header.repeatClose
+    val repeatAlternatives = measure.header.repeatAlternatives
+
+    val headerText = remember(measureIndex, measureTitle) {
+        if (measureTitle.isNullOrEmpty()) "$measureIndex" else "$measureIndex - $measureTitle"
     }
 
     val headerTextMeasurer = rememberTextMeasurer()
@@ -43,10 +49,26 @@ fun Measure(
     val repeatCloseMeasurer = rememberTextMeasurer()
     val repeatCloseTextStyle = typography.labelSmall
 
-    val drawColor = if (isSystemInDarkTheme()) {
-        Color.White
-    } else {
-        Color.Black
+    val beatTextMeasurer = rememberTextMeasurer()
+    val beatTextStyle = typography.bodySmall
+
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val drawColor = if (isSystemInDarkTheme()) Color.White else Color.Black
+
+    val voice = measure.voices.firstOrNull()
+    
+    // Pre-calculate text layouts for beats to avoid measuring during Draw phase
+    val beatLayouts = remember(voice, beatTextStyle, drawColor) {
+        voice?.beats?.map { beat ->
+            beat.notes.map { note ->
+                val text = when (note.type) {
+                    NoteType.Rest -> "\u23F9"
+                    NoteType.Dead -> "X"
+                    else -> note.value.toString()
+                }
+                beatTextMeasurer.measure(text, beatTextStyle.copy(color = drawColor))
+            }
+        } ?: emptyList()
     }
 
     Canvas(
@@ -54,39 +76,28 @@ fun Measure(
     ) {
         val yOffset = size.height / 10
 
-        // draw the measure count and title e.g. "1 - Intro" or simply "2"
         drawMeasureHeader(headerText, headerTextMeasurer, headerTextStyle, drawColor)
-
-        // draw the string lines
         drawStrings(stringCount, yOffset, drawColor)
 
         if (isRepeatOpen) {
-            // draw the repeat border
             drawLine(drawColor, Offset(0f, yOffset - 1.dp.value), Offset(0f, stringCount * yOffset + 1.dp.value), strokeWidth = 8f)
-            // draw the starting border
             drawLine(drawColor, Offset(10.dp.value, yOffset), Offset(10.dp.value, stringCount * yOffset), strokeWidth = 2f)
-            // draw the repeat circles
             drawCircle(drawColor, 6f, Offset(24.dp.value, ((stringCount + 1f) * yOffset / 2f) - 26.dp.value))
             drawCircle(drawColor, 6f, Offset(24.dp.value, ((stringCount + 1f) * yOffset / 2f) + 26.dp.value))
         } else {
-            // draw the starting border
             drawLine(drawColor, Offset(0f, yOffset), Offset(0f, stringCount * yOffset), strokeWidth = 2f)
         }
 
         if (isLastMeasure || repeatClose > 0) {
-            // draw the ending border
             drawLine(drawColor, Offset(size.width - 10.dp.value, yOffset), Offset(size.width - 10.dp.value, stringCount * yOffset), strokeWidth = 2f)
-            // draw the closure border
             drawLine(drawColor, Offset(size.width, yOffset - 1.dp.value), Offset(size.width, stringCount * yOffset + 2.dp.value), strokeWidth = 8f)
 
             if (repeatClose > 0) {
-                // draw the repeat circles
                 drawCircle(drawColor, 6f, Offset(size.width - 24.dp.value, ((stringCount + 1f) * yOffset / 2f) - 26.dp.value))
                 drawCircle(drawColor, 6f, Offset(size.width - 24.dp.value, ((stringCount + 1f) * yOffset / 2f) + 26.dp.value))
                 drawText(textMeasurer = repeatCloseMeasurer, text = "${repeatClose}x", topLeft = Offset(size.width - 32.dp.value, 0f), style = repeatCloseTextStyle.copy(color = drawColor))
             }
         } else {
-            // draw the ending border
             drawLine(drawColor, Offset(size.width, yOffset), Offset(size.width, stringCount * yOffset), strokeWidth = 2f)
         }
 
@@ -94,19 +105,20 @@ fun Measure(
             drawText(textMeasurer = repeatCloseMeasurer, text = repeatAlternatives, topLeft = Offset(size.width / 2f - 32.dp.value, 0f), style = repeatCloseTextStyle.copy(color = drawColor))
         }
 
-        // for first measure, we draw the time signature too (eg. 4/4) center vertically
         timeSignature?.let {
-            drawText(
-                textMeasurer = timeSignatureMeasurer,
-                text = "${it.numerator}",
-                topLeft = Offset(yOffset, ((stringCount + .5f) * yOffset / 2f) - timeSignatureTextStyle.lineHeight.value),
-                style = timeSignatureTextStyle.copy(color = drawColor)
-            )
-            drawText(
-                textMeasurer = timeSignatureMeasurer,
-                text = "${it.denominator.value}",
-                topLeft = Offset(yOffset, (stringCount + .5f) * yOffset / 2f),
-                style = timeSignatureTextStyle.copy(color = drawColor)
+            drawText(timeSignatureMeasurer, "${it.numerator}", Offset(yOffset, ((stringCount + .5f) * yOffset / 2f) - timeSignatureTextStyle.lineHeight.value), timeSignatureTextStyle.copy(color = drawColor))
+            drawText(timeSignatureMeasurer, "${it.denominator.value}", Offset(yOffset, (stringCount + .5f) * yOffset / 2f), timeSignatureTextStyle.copy(color = drawColor))
+        }
+
+        voice?.beats?.forEachIndexed { index, beat ->
+            drawBeat(
+                beat = beat,
+                textMeasurer = beatTextMeasurer,
+                textStyle = beatTextStyle,
+                backgroundColor = backgroundColor,
+                color = drawColor,
+                offset = Offset((index + 1) * yOffset, yOffset),
+                cachedLayouts = beatLayouts.getOrNull(index)
             )
         }
     }
