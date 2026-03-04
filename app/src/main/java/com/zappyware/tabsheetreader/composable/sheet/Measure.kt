@@ -12,11 +12,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawBeat
+import com.zappyware.tabsheetreader.composable.sheet.draw.drawBeatLine
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawMeasureHeader
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawStrings
 import com.zappyware.tabsheetreader.core.data.song.measure.Measure
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.NoteType
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.hasPalmMute
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.isRest
 import com.zappyware.tabsheetreader.core.data.song.track.Track
 
 @Composable
@@ -110,21 +114,70 @@ fun Measure(
             drawText(timeSignatureMeasurer, "${it.denominator.value}", Offset(yOffset, (stringCount + .5f) * yOffset / 2f), timeSignatureTextStyle.copy(color = drawColor))
         }
 
-        var beatOffset = 8.dp.value
-        val beatAreaWidth = size.width - 16.dp.value
+        var beatOffset = if (isRepeatOpen) 40.dp.value else 16.dp.value
+        val beatAreaWidth = size.width - beatOffset - (if (repeatClose > 0) 32.dp.value else 16.dp.value)
 
-        voice?.beats?.forEachIndexed { index, beat ->
-            drawBeat(
-                beat = beat,
-                textMeasurer = beatTextMeasurer,
-                textStyle = beatTextStyle,
-                backgroundColor = backgroundColor,
-                color = drawColor,
-                beatOffset = beatOffset,
-                stringOffset = yOffset,
-                cachedLayouts = beatLayouts.getOrNull(index)
-            )
-            beatOffset += beatAreaWidth / beat.duration.value
+        voice?.beats?.let { beats ->
+            val longestBeatDuration = beats.minOf { it.duration.value }
+            beats.forEachIndexed { index, beat ->
+                drawBeat(
+                    beat = beat,
+                    textMeasurer = beatTextMeasurer,
+                    textStyle = beatTextStyle,
+                    backgroundColor = backgroundColor,
+                    color = drawColor,
+                    beatOffset = beatOffset,
+                    stringOffset = yOffset,
+                    cachedLayouts = beatLayouts.getOrNull(index)
+                )
+
+                val currentBeatOffset = beatOffset
+                beatOffset += beatAreaWidth / beat.duration.value
+
+                if (!beat.isRest()) {
+                    drawBeatLine(
+                        beat = beat,
+                        color = drawColor,
+                        beatOffset = currentBeatOffset + ((beatLayouts.getOrNull(index)
+                            ?.firstOrNull()?.size?.width ?: 0) / 2f),
+                        nextBeatOffset = beatOffset + ((beatLayouts.getOrNull(index + 1)
+                            ?.firstOrNull()?.size?.width?.toFloat() ?: 32.dp.value) / 2f),
+                        verticalOffset = stringCount * yOffset + (beatTextStyle.lineHeight.value / 2f),
+                        longestBeatDuration = longestBeatDuration,
+                    )
+
+                    // draw end vertical line
+                    if (index == beats.lastIndex) {
+                        val lineStart =
+                            stringCount * yOffset + (beatTextStyle.lineHeight.value / 2f)
+                        drawLine(
+                            color = drawColor,
+                            start = Offset(beatOffset + 16.dp.value, lineStart),
+                            end = Offset(
+                                beatOffset + 16.dp.value,
+                                lineStart + 50.dp.value - longestBeatDuration
+                            ),
+                            strokeWidth = 2.dp.value,
+                        )
+                    }
+
+                    if (beat.hasPalmMute()) {
+                        drawText(
+                            textMeasurer = headerTextMeasurer,
+                            text = "P.M.",
+                            topLeft = Offset(
+                                currentBeatOffset - ((beatLayouts.getOrNull(index)
+                                    ?.firstOrNull()?.size?.width ?: 0) / 2f),
+                                stringCount * yOffset + 60.dp.value
+                            ),
+                            style = headerTextStyle.copy(
+                                color = drawColor,
+                                fontSize = (headerTextStyle.fontSize.value * 0.75).sp
+                            ),
+                        )
+                    }
+                }
+            }
         }
     }
 }

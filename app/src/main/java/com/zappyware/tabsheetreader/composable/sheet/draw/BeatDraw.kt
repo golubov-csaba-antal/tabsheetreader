@@ -9,6 +9,8 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.zappyware.tabsheetreader.core.data.song.Durations
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.Beat
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.NoteType
 
@@ -60,4 +62,33 @@ fun DrawScope.drawBeat(
             )
         }
     }
+}
+
+fun DrawScope.drawBeatLine(
+    beat: Beat,
+    color: Color,
+    beatOffset: Float,
+    nextBeatOffset: Float,
+    verticalOffset: Float,
+    longestBeatDuration: Int,
+) {
+    // draw the horizontal line which actually symbolizes the beat duration too
+    var durationValue = Durations.EIGHTH.value
+    while (durationValue <= beat.duration.value) {
+        drawLine(
+            color = color,
+            start = Offset(beatOffset, verticalOffset + 48.dp.value - durationValue.dp.value),
+            end = Offset(nextBeatOffset, verticalOffset + 48.dp.value - durationValue.dp.value),
+            strokeWidth = 4.dp.value,
+        )
+        durationValue *= 2
+    }
+
+    // draw the vertical line
+    drawLine(
+        color = color,
+        start = Offset(beatOffset - 1.dp.value, verticalOffset),
+        end = Offset(beatOffset - 1.dp.value, verticalOffset + 50.dp.value - longestBeatDuration),
+        strokeWidth = 2.dp.value,
+    )
 }

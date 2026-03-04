@@ -6,7 +6,7 @@ data class WahEffect(
     val display: Boolean = false
 ) {
     init {
-        require(value in -2..100) { "value must be in range from -2 to 100" }
+        require(value in -2..100) { "value must be in range from -2 to 100, but was $value" }
     }
 
     fun isOff(): Boolean = value == OFF.value

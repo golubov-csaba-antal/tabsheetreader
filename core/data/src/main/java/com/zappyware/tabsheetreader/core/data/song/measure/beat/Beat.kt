@@ -20,3 +20,7 @@ val Beat.startInMeasure: Int? get() = start?.let { it - voice.measure.header.sta
 fun Beat.hasVibrato() = notes.any { it.effect.vibrato }
 
 fun Beat.getHarmonic(): HarmonicEffect? = notes.firstOrNull { it.effect.isHarmonic }?.effect?.harmonic
+
+fun Beat.isRest() = notes.all { it.type == NoteType.Rest }
+
+fun Beat.hasPalmMute() = notes.any { it.effect.palmMute }
