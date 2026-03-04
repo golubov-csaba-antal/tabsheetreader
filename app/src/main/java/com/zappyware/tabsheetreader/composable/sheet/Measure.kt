@@ -110,6 +110,9 @@ fun Measure(
             drawText(timeSignatureMeasurer, "${it.denominator.value}", Offset(yOffset, (stringCount + .5f) * yOffset / 2f), timeSignatureTextStyle.copy(color = drawColor))
         }
 
+        var beatOffset = 8.dp.value
+        val beatAreaWidth = size.width - 16.dp.value
+
         voice?.beats?.forEachIndexed { index, beat ->
             drawBeat(
                 beat = beat,
@@ -117,9 +120,11 @@ fun Measure(
                 textStyle = beatTextStyle,
                 backgroundColor = backgroundColor,
                 color = drawColor,
-                offset = Offset((index + 1) * yOffset, yOffset),
+                beatOffset = beatOffset,
+                stringOffset = yOffset,
                 cachedLayouts = beatLayouts.getOrNull(index)
             )
+            beatOffset += beatAreaWidth / beat.duration.value
         }
     }
 }

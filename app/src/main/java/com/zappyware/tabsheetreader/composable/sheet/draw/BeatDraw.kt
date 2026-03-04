@@ -18,17 +18,18 @@ fun DrawScope.drawBeat(
     textStyle: TextStyle,
     backgroundColor: Color,
     color: Color,
-    offset: Offset,
+    beatOffset: Float,
+    stringOffset: Float,
     cachedLayouts: List<TextLayoutResult>? = null,
 ) {
     if (beat.notes.isEmpty()) {
         drawRect(
             color = color,
             topLeft = Offset(
-                3 * offset.x,
-                2.65f * offset.y
+                3 * stringOffset,
+                2.65f * stringOffset
             ),
-            size = Size(offset.y, 0.75f * offset.y)
+            size = Size(stringOffset, 0.75f * stringOffset)
         )
     } else {
         val style = textStyle.copy(color = color, fontWeight = FontWeight.Bold)
@@ -43,8 +44,8 @@ fun DrawScope.drawBeat(
             }
 
             val topLeft = Offset(
-                (1.25f * offset.x),
-                note.string * offset.y - (textStyle.lineHeight.value * 0.75f)
+                beatOffset,
+                note.string * stringOffset - (textStyle.lineHeight.value * 0.75f)
             )
 
             drawRect(
