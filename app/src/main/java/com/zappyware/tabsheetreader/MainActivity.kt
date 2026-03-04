@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     val resources = LocalResources.current
                     LaunchedEffect(Unit) {
-                        mainViewModel.openFile(resources.openRawResource(R.raw.schwarzes))
+                        mainViewModel.openFile(resources.openRawResource(R.raw.links))
                     }
 
                     NavDisplay(

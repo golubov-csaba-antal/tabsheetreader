@@ -693,10 +693,10 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 strings = List(7) { inputStream.readI32() }.take(size),
                 barres = run {
                     val barresCount = inputStream.readU8()
-                    val barreFrets = List(2) { inputStream.readU8() }
-                    val barreStarts = List(2) { inputStream.readU8() }
-                    val barreEnds = List(2) { inputStream.readU8() }
-                    List(barresCount.coerceAtMost(2)) { i ->
+                    val barreFrets = List(5) { inputStream.readU8() }
+                    val barreStarts = List(5) { inputStream.readU8() }
+                    val barreEnds = List(5) { inputStream.readU8() }
+                    List(barresCount.coerceAtMost(5)) { i ->
                         Barre(fret = barreFrets[i], start = barreStarts[i], end = barreEnds[i])
                     }
                 },
