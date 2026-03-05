@@ -1,5 +1,6 @@
 package com.zappyware.tabsheetreader.core.data
 
+import com.zappyware.tabsheetreader.core.data.song.Clipboard
 import com.zappyware.tabsheetreader.core.data.song.Directions
 import com.zappyware.tabsheetreader.core.data.song.FileVersion
 import com.zappyware.tabsheetreader.core.data.song.Key
@@ -16,6 +17,7 @@ import com.zappyware.tabsheetreader.core.data.song.track.Track
 
 data class Song(
     val fileVersion: FileVersion,
+    val clipboard: Clipboard? = null,
     val songInfo: SongInfo,
     val lyrics: Lyrics,
     val masterEffect: MasterEffect?,

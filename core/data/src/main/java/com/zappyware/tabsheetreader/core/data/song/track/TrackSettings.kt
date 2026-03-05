@@ -1,16 +1,20 @@
 package com.zappyware.tabsheetreader.core.data.song.track
 
 data class TrackSettings(
-    val tablature: Boolean,
-    val notation: Boolean,
-    val areDiagramsBelow: Boolean,
-    val showRhythm: Boolean,
-    val forceHorizontal: Boolean,
-    val forceChannels: Boolean,
-    val diagramList: Boolean,
-    val diagramsInScore: Boolean,
-    val muted: Boolean,
-    val autoLetRing: Boolean,
-    val autoBrush: Boolean,
-    val extendRhythmic: Boolean,
-)
+    val tablature: Boolean = true,
+    val notation: Boolean = true,
+    val areDiagramsBelow: Boolean = false,
+    val showRhythm: Boolean = false,
+    val forceHorizontal: Boolean = false,
+    val forceChannels: Boolean = false,
+    val diagramList: Boolean = true,
+    val diagramsInScore: Boolean = false,
+    val muted: Boolean = false,
+    val autoLetRing: Boolean = false,
+    val autoBrush: Boolean = false,
+    val extendRhythmic: Boolean = false,
+) {
+    companion object {
+        val Default = TrackSettings()
+    }
+}

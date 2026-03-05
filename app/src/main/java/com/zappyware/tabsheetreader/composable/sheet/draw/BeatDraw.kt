@@ -8,11 +8,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.zappyware.tabsheetreader.core.data.song.Durations
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.Beat
-import com.zappyware.tabsheetreader.core.data.song.measure.beat.NoteType
 
 fun DrawScope.drawBeat(
     beat: Beat,
@@ -24,71 +20,52 @@ fun DrawScope.drawBeat(
     stringOffset: Float,
     cachedLayouts: List<TextLayoutResult>? = null,
 ) {
-    if (beat.notes.isEmpty()) {
-        drawRect(
-            color = color,
-            topLeft = Offset(
-                3 * stringOffset,
-                2.65f * stringOffset
-            ),
-            size = Size(stringOffset, 0.75f * stringOffset)
+    if (cachedLayouts.isNullOrEmpty()) return
+
+    // Pre-calculate the Y adjustment based on line height
+    // Hoisting this calculation out of the loop
+    val yAdjustment = textStyle.lineHeight.toPx() * 0.75f
+    val notes = beat.notes
+
+    if (notes.isEmpty()) {
+        // Handle whole rest note using the first cached layout
+        val layoutResult = cachedLayouts[0]
+        val topLeft = Offset(
+            beatOffset,
+            3 * stringOffset - yAdjustment
+        )
+
+        drawText(
+            textLayoutResult = layoutResult,
+            topLeft = topLeft,
+            color = color
         )
     } else {
-        val style = textStyle.copy(color = color, fontWeight = FontWeight.Bold)
-        beat.notes.forEachIndexed { index, note ->
-            val layoutResult = cachedLayouts?.getOrNull(index) ?: run {
-                val text = when (note.type) {
-                    NoteType.Rest -> "\u23F9"
-                    NoteType.Dead -> "X"
-                    else -> note.value.toString()
-                }
-                textMeasurer.measure(text, style)
-            }
+        // Iterate through notes using a for-loop to avoid iterator allocation
+        for (i in notes.indices) {
+            val note = notes[i]
+            val layoutResult = cachedLayouts.getOrNull(i) ?: continue
+
+            val width = layoutResult.size.width.toFloat()
+            val height = layoutResult.size.height.toFloat()
 
             val topLeft = Offset(
-                beatOffset,
-                note.string * stringOffset - (textStyle.lineHeight.value * 0.75f)
+                beatOffset - (width / 2f),
+                note.string * stringOffset - yAdjustment
             )
 
+            // Draw background rectangle to clear string lines under the note
             drawRect(
                 color = backgroundColor,
                 topLeft = topLeft,
-                size = Size(layoutResult.size.width.toFloat(), layoutResult.size.height.toFloat())
+                size = Size(width, height)
             )
 
             drawText(
                 textLayoutResult = layoutResult,
-                topLeft = topLeft
+                topLeft = topLeft,
+                color = color
             )
         }
     }
-}
-
-fun DrawScope.drawBeatLine(
-    beat: Beat,
-    color: Color,
-    beatOffset: Float,
-    nextBeatOffset: Float,
-    verticalOffset: Float,
-    longestBeatDuration: Int,
-) {
-    // draw the horizontal line which actually symbolizes the beat duration too
-    var durationValue = Durations.EIGHTH.value
-    while (durationValue <= beat.duration.value) {
-        drawLine(
-            color = color,
-            start = Offset(beatOffset, verticalOffset + 48.dp.value - durationValue.dp.value),
-            end = Offset(nextBeatOffset, verticalOffset + 48.dp.value - durationValue.dp.value),
-            strokeWidth = 4.dp.value,
-        )
-        durationValue *= 2
-    }
-
-    // draw the vertical line
-    drawLine(
-        color = color,
-        start = Offset(beatOffset - 1.dp.value, verticalOffset),
-        end = Offset(beatOffset - 1.dp.value, verticalOffset + 50.dp.value - longestBeatDuration),
-        strokeWidth = 2.dp.value,
-    )
 }

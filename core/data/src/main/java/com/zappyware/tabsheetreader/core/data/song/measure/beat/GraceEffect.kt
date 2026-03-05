@@ -5,6 +5,6 @@ data class GraceEffect(
     val fret: Int,
     val isDead: Boolean = false,
     val isOnBeat: Boolean = false,
-    val transition: Int,
+    val transition: GraceEffectTransition = GraceEffectTransition.None,
     val velocity: Int = Velocities.DEFAULT,
 )

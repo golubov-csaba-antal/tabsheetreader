@@ -1,6 +1,7 @@
 package com.zappyware.tabsheetreader.core.reader.gp5
 
 import com.zappyware.tabsheetreader.core.data.Song
+import com.zappyware.tabsheetreader.core.data.song.Clipboard
 import com.zappyware.tabsheetreader.core.data.song.Color
 import com.zappyware.tabsheetreader.core.data.song.Directions
 import com.zappyware.tabsheetreader.core.data.song.Equalizer
@@ -36,6 +37,7 @@ import com.zappyware.tabsheetreader.core.data.song.measure.LineBreak
 import com.zappyware.tabsheetreader.core.data.song.measure.Measure
 import com.zappyware.tabsheetreader.core.data.song.measure.MeasureClef
 import com.zappyware.tabsheetreader.core.data.song.measure.Voice
+import com.zappyware.tabsheetreader.core.data.song.measure.beam.BeamHandler
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.ArtificialHarmonic
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.Barre
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.Beat
@@ -63,6 +65,7 @@ import com.zappyware.tabsheetreader.core.data.song.measure.beat.RSEInstrument
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SemiHarmonic
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SlapEffects
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SlideType
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.TIED_NOTE
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.TappedHarmonic
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.TremoloPickingEffect
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.TrillEffect
@@ -77,6 +80,7 @@ import com.zappyware.tabsheetreader.core.data.song.measure.beat.findChordAlterat
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.findChordExtension
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.findChordType
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.findFingering
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.findGraceEffectTransition
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.findSlapEffect
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.isEmpty
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.swapDirections
@@ -109,6 +113,7 @@ import kotlin.math.roundToInt
 class GP5FileReader @Inject constructor(): IFileReader {
 
     private var hasMasterEffect = false
+    private var isClipboard = false
     private var isVersion5_0_0 = false
     private var measureCount = 0
     private var tracksCount = 0
@@ -119,8 +124,10 @@ class GP5FileReader @Inject constructor(): IFileReader {
         Song(
             fileVersion = readFileVersion(inputStream).also {
                 hasMasterEffect = it.hasMasterEffect()
+                isClipboard = it.version.startsWith("CLIPBOARD")
                 isVersion5_0_0 = it.isVersion5_0_0()
             },
+            clipboard = if (isClipboard) readClipboard(inputStream) else null,
             songInfo = readSongInfo(inputStream),
             lyrics = readLyrics(inputStream),
             masterEffect = if (hasMasterEffect) readMasterEffect(inputStream) else null,
@@ -140,6 +147,17 @@ class GP5FileReader @Inject constructor(): IFileReader {
 
     private fun readFileVersion(inputStream: InputStream): FileVersion =
         FileVersion(version = inputStream.readByteSizeString(30))
+
+    private fun readClipboard(inputStream: InputStream): Clipboard =
+        Clipboard(
+            startMeasure = inputStream.readI32(),
+            stopMeasure = inputStream.readI32(),
+            startTrack = inputStream.readI32(),
+            stopTrack = inputStream.readI32(),
+            startBeat = inputStream.readI32(),
+            stopBeat = inputStream.readI32(),
+            subBarCopy = inputStream.readI32() == 1,
+        )
 
     private fun readSongInfo(inputStream: InputStream): SongInfo =
         SongInfo(
@@ -172,7 +190,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
     private fun readMasterEffect(inputStream: InputStream): MasterEffect =
         MasterEffect(
             volume = inputStream.readI32(),
-            trackId = inputStream.readI32(),
+            gain = inputStream.readI32(),
             equalizer = readEqualizer(inputStream, 11)
         )
 
@@ -262,7 +280,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         var currentTimeSignature: TimeSignature? = null
         var previousTimeSignature: TimeSignature? = null
         return List(measureCount) { index ->
-            flags = inputStream.read()
+            flags = inputStream.readU8()
             MeasureHeader(
                 number = index + 1,
                 start = start,
@@ -280,9 +298,9 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 repeatClose = if (flags and 0x08 == 0x08) inputStream.read() else 0,
                 marker = if (flags and 0x20 == 0x20) readMarker(inputStream) else null,
                 keySignature = if (flags and 0x40 == 0x40) findKeySignatures(inputStream.read(), inputStream.read()) else (previousHeader?.keySignature ?: KeySignatures.CMajor),
-                repeatAlternatives = if (flags and 0x10 == 0x10) inputStream.read().toRepeatAlternatives() else null,
-                beams = if (flags and 0x03 == 0x03) listOf(inputStream.read(), inputStream.read(), inputStream.read(), inputStream.read()) else previousHeader?.beams ?: defaultBeams,
-                tripletFeel = (if (flags and 0x10 == 0) inputStream.skip(1) else Unit).let { findTripletFeel(inputStream.read()) },
+                repeatAlternatives = if (flags and 0x10 == 0x10) inputStream.readU8().toRepeatAlternatives() else null,
+                beams = if (flags and 0x03 == 0x03) List(4) { inputStream.readU8() } else previousHeader?.beams ?: defaultBeams,
+                tripletFeel = (if (flags and 0x10 == 0) inputStream.skip(1) else Unit).let { findTripletFeel(inputStream.readU8()) },
             ).also {
                 previousHeader = it
                 previousTimeSignature = it.timeSignature
@@ -296,7 +314,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         Marker(title = inputStream.readIByteSizeString(), color = readColor(inputStream))
 
     private fun readColor(inputStream: InputStream): Color =
-        Color(red = inputStream.read(), green = inputStream.read(), blue = inputStream.read()).also { inputStream.skip(1) }
+        Color(red = inputStream.readU8(), green = inputStream.readU8(), blue = inputStream.readU8()).also { inputStream.skip(1) }
 
     private fun readTracks(inputStream: InputStream): List<Track> {
         var flags: Int
@@ -304,7 +322,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         var stringCount: Int
         return List(tracksCount) { index ->
             if (isVersion5_0_0 && index == 0) inputStream.skip(1)
-            flags = inputStream.read()
+            flags = inputStream.readU8()
             Track(
                 number = index + 1,
                 isPercussionTrack = flags and 0x01 == 0x01,
@@ -317,9 +335,9 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 indicateTuning = flags and 0x80 == 0x80,
                 name = inputStream.readByteSizeString(40),
                 stringCount = inputStream.readI32().also { stringCount = it },
-                strings = List(7) { idx ->
+                strings = List(7) { stringIndex ->
                     val tuning = inputStream.readI32()
-                    if (idx < stringCount) GuitarString(number = idx + 1, value = tuning) else null
+                    if (stringIndex < stringCount) GuitarString(number = stringIndex + 1, value = tuning) else null
                 }.filterNotNull(),
                 port = inputStream.readI32(),
                 channel = readMidiChannel(inputStream),
@@ -341,8 +359,8 @@ class GP5FileReader @Inject constructor(): IFileReader {
                     extendRhythmic = settingsFlags and 0x0800 == 0x0800,
                 ),
                 rse = TrackEffect(
-                    autoAccentuation = findAccentuation(inputStream.readI8()).also { inputStream.skip(1) },
-                    humanize = inputStream.readI8().also {
+                    autoAccentuation = findAccentuation(inputStream.readU8()).also { inputStream.skip(1) },
+                    humanize = inputStream.readU8().also {
                         inputStream.readI32()
                         inputStream.readI32()
                         inputStream.readI32()
@@ -354,12 +372,12 @@ class GP5FileReader @Inject constructor(): IFileReader {
                         soundBank = inputStream.readI32(),
                         effectNumber = if (isVersion5_0_0) inputStream.readI16().also { inputStream.skip(1) } else inputStream.readI32(),
                     ),
-                    equalizer = if (hasMasterEffect) readEqualizer(inputStream, 4) else null,
+                    equalizer = if (hasMasterEffect) readEqualizer(inputStream, 4) else Equalizer.Default,
                     effectCategory = if (hasMasterEffect) inputStream.readIByteSizeString() else null,
                     effect = if (hasMasterEffect) inputStream.readIByteSizeString() else null,
                 ),
             )
-        }.also { if (isVersion5_0_0) inputStream.skip(2) else inputStream.skip(1) }
+        }.also { inputStream.skip(if (isVersion5_0_0) 2 else 1) }
     }
 
     private fun readMeasures(inputStream: InputStream): List<Measure> {
@@ -401,7 +419,12 @@ class GP5FileReader @Inject constructor(): IFileReader {
             }
         }
 
-        return partialVoice.copy(beats = beats)
+        val beamGroups = BeamHandler.createBeamGroups(beats, measure.header.timeSignature)
+
+        return partialVoice.copy(
+            beats = beats,
+            beamGroups = beamGroups
+        )
     }
 
     private fun readBeat(inputStream: InputStream, start: Int, voice: Voice): Beat {
@@ -436,12 +459,9 @@ class GP5FileReader @Inject constructor(): IFileReader {
         val stringFlags = inputStream.readU8()
         val notes = mutableListOf<Note>()
 
-        for (i in 6 downTo 0) {
-            if ((stringFlags and (1 shl i)) != 0) {
-                val string = voice.measure.track.strings.getOrNull(6 - i)
-                if (string != null) {
-                    notes.add(readNote(inputStream, string, partialBeat))
-                }
+        voice.measure.track.strings.forEach { string ->
+            if ((stringFlags and (1 shl 7 - string.number)) != 0) {
+                notes.add(readNote(inputStream, string, partialBeat))
             }
         }
 
@@ -549,6 +569,8 @@ class GP5FileReader @Inject constructor(): IFileReader {
         tableChange = readMixTableChangeValues(inputStream, tableChange)
         tableChange = readMixTableChangeDurations(inputStream, tableChange)
 
+        inputStream.readI8()
+
         val flags = inputStream.readI8()
         tableChange = readMixTableChangeFlags(tableChange, flags)
 
@@ -632,7 +654,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
             phaser = tableChange.phaser?.copy(duration = inputStream.readI8()),
             tremolo = tableChange.tremolo?.copy(duration = inputStream.readI8()),
             tempo = tableChange.tempo?.copy(duration = inputStream.readI8()),
-            hideTempo = tableChange.tempo?.let { isVersion5_0_0 && inputStream.readBoolean() } ?: tableChange.hideTempo,
+            hideTempo = tableChange.tempo?.let { hasMasterEffect && inputStream.readBoolean() } ?: tableChange.hideTempo,
         )
 
     private fun readMixTableChangeFlags(tableChange: MixTableChange, flags: Int): MixTableChange =
@@ -659,7 +681,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         )
 
     private fun readRSEInstrumentEffect(inputStream: InputStream, rse: RSEInstrument): RSEInstrument =
-        if (isVersion5_0_0) {
+        if (hasMasterEffect) {
             val effect = inputStream.readIByteSizeString()
             val effectCategory = inputStream.readIByteSizeString()
             rse.copy(effect = effect, effectCategory = effectCategory)
@@ -761,7 +783,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         val value = if (flag and 0x20 == 0x20) {
             val fret = inputStream.readI8()
             if (noteType == NoteType.Tie) {
-                0 // get tied note
+                TIED_NOTE
             } else {
                 fret
             }.coerceIn(0, 100)
@@ -782,8 +804,8 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 heavyAccentuatedNote = flag and 0x02 == 0x02,
                 ghostNote = flag and 0x04 == 0x04,
                 accentuatedNote = flag and 0x40 == 0x40,
-                hammer = flag1 and 0x01 == 0x01,
-                letRing = flag1 and 0x02 == 0x02,
+                hammer = flag1 and 0x02 == 0x02,
+                letRing = flag1 and 0x08 == 0x08,
                 staccato = flag2 and 0x01 == 0x01,
                 palmMute = flag2 and 0x02 == 0x02,
                 vibrato = flag2 and 0x40 == 0x40,
@@ -842,11 +864,11 @@ class GP5FileReader @Inject constructor(): IFileReader {
     }
 
     private fun readGraceEffect(inputStream: InputStream): GraceEffect {
-        val fret = inputStream.readI8()
-        val velocity = inputStream.readI8()
-        val transition = inputStream.readI8()
-        val duration = inputStream.readI8()
-        val flag = inputStream.readI8()
+        val fret = inputStream.readU8()
+        val velocity = inputStream.readU8()
+        val transition = findGraceEffectTransition(inputStream.readU8())
+        val duration = inputStream.readU8()
+        val flag = inputStream.readU8()
         return GraceEffect(
             fret = fret,
             velocity = velocity,
@@ -858,7 +880,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
     }
 
     private fun readSlides(inputStream: InputStream): List<SlideType> {
-        val slideType = inputStream.readI8()
+        val slideType = inputStream.readU8()
         val slides = mutableListOf<SlideType>()
         if (slideType and 0x01 == 0x01) slides.add(SlideType.ShiftSlideTo)
         if (slideType and 0x02 == 0x02) slides.add(SlideType.LegatoSlideTo)
@@ -870,17 +892,17 @@ class GP5FileReader @Inject constructor(): IFileReader {
     }
 
     private fun readHarmonic(inputStream: InputStream): HarmonicEffect? {
-        val value = inputStream.readI8()
+        val value = inputStream.readU8()
         return when(value) {
             1 -> NaturalHarmonic
             2 -> ArtificialHarmonic(
                 PitchClass(
-                    semitone = inputStream.readI8(),
+                    semitone = inputStream.readU8(),
                     intonation = if (inputStream.readI8() == 1) "sharp" else "flat",
                 ),
-                octave = Octave(inputStream.readI8()),
+                octave = Octave(inputStream.readU8()),
             )
-            3 -> TappedHarmonic(fret = inputStream.readI8())
+            3 -> TappedHarmonic(fret = inputStream.readU8())
             4 -> PinchHarmonic
             5 -> SemiHarmonic
             else -> null

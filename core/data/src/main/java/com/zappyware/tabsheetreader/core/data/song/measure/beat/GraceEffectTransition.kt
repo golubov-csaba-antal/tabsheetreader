@@ -6,3 +6,6 @@ enum class GraceEffectTransition {
     Bend,
     Hammer,
 }
+
+fun findGraceEffectTransition(value: Int) =
+    GraceEffectTransition.entries.firstOrNull { it.ordinal == value } ?: GraceEffectTransition.None

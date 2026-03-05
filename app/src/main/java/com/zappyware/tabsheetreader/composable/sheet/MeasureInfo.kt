@@ -9,6 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zappyware.tabsheetreader.MusicalCharacters
+import com.zappyware.tabsheetreader.core.data.song.Durations
 
 @Composable
 fun MeasureInfo(
@@ -21,7 +23,7 @@ fun MeasureInfo(
     ) {
         tempo?.let {
             Text(
-                text = "\u2669",
+                text = MusicalCharacters.getNotationCharacter(Durations.QUARTER.value),
                 fontSize = 30.sp
             )
             Text(

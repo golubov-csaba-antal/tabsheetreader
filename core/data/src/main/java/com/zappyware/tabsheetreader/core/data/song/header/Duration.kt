@@ -9,7 +9,11 @@ data class Duration(
     val value: Int = Durations.QUARTER.value,
     val isDotted: Boolean = false,
     val tuplet: Tuplet = Tuplet.Default,
-)
+) {
+    companion object {
+        val Default = Duration()
+    }
+}
 
 const val WHOLE_TIME = 3840
 const val QUARTER_TIME = 960

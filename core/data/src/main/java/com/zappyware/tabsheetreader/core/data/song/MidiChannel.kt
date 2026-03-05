@@ -11,4 +11,8 @@ data class MidiChannel(
     val reverb: Int = 0,
     val phaser: Int = 0,
     val tremolo: Int = 0,
-)
+) {
+    companion object {
+        val Default = MidiChannel(0)
+    }
+}

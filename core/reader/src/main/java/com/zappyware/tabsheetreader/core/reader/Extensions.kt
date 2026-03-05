@@ -78,7 +78,7 @@ fun InputStream.readByteSizeString(count: Int): String {
 
 fun InputStream.readIByteSizeString(): String {
     val size = readI32()
-    return if (size <= 0) "" else readByteSizeString(size - 1)
+    return readByteSizeString(size - 1)
 }
 
 fun InputStream.readIntSizeString(): String {
