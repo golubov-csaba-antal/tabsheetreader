@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zappyware.tabsheetreader.core.data.song.FileVersion
 import com.zappyware.tabsheetreader.core.data.song.Lyrics
-import com.zappyware.tabsheetreader.core.data.song.header.MeasureHeader
 import com.zappyware.tabsheetreader.core.data.song.SongInfo
 import com.zappyware.tabsheetreader.core.data.song.Tempo
 import com.zappyware.tabsheetreader.core.data.song.measure.Measure

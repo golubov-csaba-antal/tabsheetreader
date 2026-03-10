@@ -61,7 +61,6 @@ import com.zappyware.tabsheetreader.core.data.song.measure.beat.NoteType
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.Octaves
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.PinchHarmonic
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.PitchClass
-import com.zappyware.tabsheetreader.core.data.song.track.RSEInstrument
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SemiHarmonic
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SlapEffects
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SlideType
@@ -86,6 +85,7 @@ import com.zappyware.tabsheetreader.core.data.song.measure.beat.isEmpty
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.swapDirections
 import com.zappyware.tabsheetreader.core.data.song.measure.findLineBreak
 import com.zappyware.tabsheetreader.core.data.song.track.GuitarString
+import com.zappyware.tabsheetreader.core.data.song.track.RSEInstrument
 import com.zappyware.tabsheetreader.core.data.song.track.Track
 import com.zappyware.tabsheetreader.core.data.song.track.TrackEffect
 import com.zappyware.tabsheetreader.core.data.song.track.TrackSettings

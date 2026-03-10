@@ -6,7 +6,6 @@ import java.io.InputStream
 import java.lang.Integer.max
 import java.lang.Integer.min
 import java.lang.Integer.numberOfTrailingZeros
-import java.io.IOException
 
 fun InputStream.readBoolean(): Boolean {
     return read() != 0

@@ -7,7 +7,6 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 fun DrawScope.drawPalmMutes(

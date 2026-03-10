@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.window.core.layout.WindowSizeClass
 import com.zappyware.tabsheetreader.MusicalCharacters
 import com.zappyware.tabsheetreader.core.data.song.Durations

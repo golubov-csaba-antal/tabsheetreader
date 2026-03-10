@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.dp
 import com.zappyware.tabsheetreader.MusicalCharacters
 import com.zappyware.tabsheetreader.composable.common.changeFontSizeForMeasure
 import com.zappyware.tabsheetreader.composable.common.complexMeasureStyleMultiplier
