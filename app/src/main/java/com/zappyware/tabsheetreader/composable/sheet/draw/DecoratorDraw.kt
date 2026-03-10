@@ -16,13 +16,14 @@ fun DrawScope.drawPalmMutes(
     headerTextMeasurer: TextMeasurer,
     headerTextStyle: TextStyle,
     drawColor: Color,
-    layoutResult: List<TextLayoutResult>?,
+    drawnPalmMute: Boolean,
+    layoutResult: TextLayoutResult?,
 ) {
     drawText(
         textMeasurer = headerTextMeasurer,
-        text = "P.M.",
+        text = if (drawnPalmMute) "\u2014" else "PM",
         topLeft = Offset(
-            currentBeatOffset - (layoutResult?.firstOrNull()?.size?.width ?: 0) / 2f,
+            currentBeatOffset - (layoutResult?.size?.width ?: 0) / 2f,
             yOffset
         ),
         style = headerTextStyle.copy(

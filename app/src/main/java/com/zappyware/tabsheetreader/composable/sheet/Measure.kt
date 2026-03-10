@@ -124,6 +124,7 @@ fun Measure(
         val p40 = 20 * d * multiplier
         val p60 = 30 * d * multiplier
         val p80 = 40 * d * multiplier
+        val drawStartingOffsetX = if (measure.header.timeSignatureChanged) p80 else if (isRepeatOpen) p60 else p40
 
         if (isRepeatOpen) {
             drawLine(drawColor, Offset(0f, yOffset - p1), Offset(0f, stringCount * yOffset + p1), strokeWidth = p8)
@@ -158,9 +159,10 @@ fun Measure(
 
         val beatAreaWidth = size.width - p80
         val beats = voice?.beats
+        var drawnPalmMute = false
         
         if (beats != null) {
-            var currentBeatOffset = p40
+            var currentBeatOffset = drawStartingOffsetX
             for (index in beats.indices) {
                 val beat = beats[index]
                 drawBeat(
@@ -181,8 +183,12 @@ fun Measure(
                         headerTextMeasurer = textMeasurer,
                         headerTextStyle = headerTextStyle,
                         drawColor = drawColor,
-                        layoutResult = beatLayouts.getOrNull(index)
+                        drawnPalmMute = drawnPalmMute,
+                        layoutResult = beatLayouts.getOrNull(index)?.firstOrNull(),
                     )
+                    drawnPalmMute = true
+                } else {
+                    drawnPalmMute = false
                 }
 
                 currentBeatOffset += beatAreaWidth / beat.duration.value
@@ -191,7 +197,7 @@ fun Measure(
 
         val beamGroups = voice?.beamGroups
         if (beamGroups != null) {
-            var currentBeamOffset = p40
+            var currentBeamOffset = drawStartingOffsetX
             val verticalLineOffset = stringCount * yOffset + (beatTextStyle.lineHeight.value) * multiplier
             
             for (i in beamGroups.indices) {

@@ -23,7 +23,7 @@ fun DrawScope.drawBeat(
 ) {
     if (cachedLayouts.isNullOrEmpty()) return
 
-    // Pre-calculate the Y adjustment based on line height
+    // Pre-calculate the Y adjustment based on the line height
     // Hoisting this calculation out of the loop
     val yAdjustment = textStyle.lineHeight.toPx() / 2
     val notes = beat.notes
@@ -31,9 +31,10 @@ fun DrawScope.drawBeat(
     if (notes.isEmpty()) {
         // Handle whole rest note using the first cached layout
         val layoutResult = cachedLayouts[0]
+        val width = layoutResult.size.width.toFloat()
         val topLeft = Offset(
-            beatOffset,
-            3 * stringOffset - yAdjustment
+            beatOffset - (width / 2f),
+            stringOffset - yAdjustment
         )
 
         drawText(

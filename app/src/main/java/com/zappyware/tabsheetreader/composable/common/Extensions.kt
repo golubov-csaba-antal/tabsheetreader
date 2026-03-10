@@ -3,7 +3,7 @@ package com.zappyware.tabsheetreader.composable.common
 import androidx.compose.ui.text.TextStyle
 import com.zappyware.tabsheetreader.core.data.song.measure.Measure
 
-const val complexMeasureStyleMultiplier = 1.75f
+const val complexMeasureStyleMultiplier = 1.5f
 
 fun Measure.isComplex() = voices.any { it.beats.size > 5 }
 
