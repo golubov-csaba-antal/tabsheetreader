@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 fun DrawScope.drawPalmMutes(
-    stringCount: Int,
     yOffset: Float,
     currentBeatOffset: Float,
     headerTextMeasurer: TextMeasurer,
@@ -24,7 +23,7 @@ fun DrawScope.drawPalmMutes(
         text = "P.M.",
         topLeft = Offset(
             currentBeatOffset - (layoutResult?.firstOrNull()?.size?.width ?: 0) / 2f,
-            stringCount * yOffset + 60.dp.value
+            yOffset
         ),
         style = headerTextStyle.copy(
             color = drawColor,

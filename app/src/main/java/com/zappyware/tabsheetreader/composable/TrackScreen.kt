@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.zappyware.tabsheetreader.MainViewModel
+import com.zappyware.tabsheetreader.composable.common.isComplex
 import com.zappyware.tabsheetreader.composable.sheet.Measure
 import com.zappyware.tabsheetreader.composable.sheet.MeasureInfo
 import com.zappyware.tabsheetreader.core.data.song.track.tuning
@@ -49,7 +50,7 @@ fun TrackScreen(
     } else {
         LazyVerticalGrid(
             columns = GridCells.Fixed(if (displayMoreCells) 3 else 2),
-            contentPadding = PaddingValues(16.dp)
+            contentPadding = PaddingValues(24.dp)
         ) {
             item(
                 contentType = ITEM_TYPE_INFO,
@@ -62,7 +63,14 @@ fun TrackScreen(
             }
             items(
                 contentType = { ITEM_TYPE_MEASURE },
-                items = trackMeasures
+                items = trackMeasures,
+                span = { measure ->
+                    if (!displayMoreCells && measure.isComplex()) {
+                        GridItemSpan(maxLineSpan)
+                    } else {
+                        GridItemSpan(1)
+                    }
+                }
             ) { measure ->
                 Measure(
                     measure = measure,

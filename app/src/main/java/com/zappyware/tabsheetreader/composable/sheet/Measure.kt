@@ -9,9 +9,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
 import com.zappyware.tabsheetreader.MusicalCharacters
+import com.zappyware.tabsheetreader.composable.common.changeFontSizeForMeasure
+import com.zappyware.tabsheetreader.composable.common.complexMeasureStyleMultiplier
+import com.zappyware.tabsheetreader.composable.common.isComplex
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawBeams
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawBeat
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawMeasureHeader
@@ -47,37 +52,51 @@ fun Measure(
     // A single text measurer can handle all text layouts
     val textMeasurer = rememberTextMeasurer()
     
-    val headerTextStyle = typography.headlineSmall
-    val timeSignatureTextStyle = typography.displayMedium
-    val repeatCloseTextStyle = typography.labelSmall
-    val beatTextStyle = typography.bodySmall
+    val headerTextStyle = typography.headlineSmall.changeFontSizeForMeasure(measure)
+    val timeSignatureTextStyle = typography.displayMedium.changeFontSizeForMeasure(measure)
+    val repeatCloseTextStyle = typography.labelSmall.changeFontSizeForMeasure(measure)
+    val beatTextStyle = typography.bodySmall.changeFontSizeForMeasure(measure)
+    val musicalTextStyle = typography.bodyMedium.changeFontSizeForMeasure(measure)
 
     val backgroundColor = MaterialTheme.colorScheme.background
     val drawColor = if (isSystemInDarkTheme()) Color.White else Color.Black
 
     val voice = measure.voices.firstOrNull()
+
+    val textStyles = mutableListOf<TextStyle>()
     
     // Pre-calculate text layouts for beats to avoid measuring during Draw phase
-    val beatLayouts = remember(voice, beatTextStyle, drawColor) {
+    val beatLayouts = remember(voice, drawColor) {
+        textStyles.clear()
         voice?.beats?.map { beat ->
             val notes = beat.notes
             if (notes.isEmpty()) {
                 val text = MusicalCharacters.getRestCharacter(beat.duration.value)
-                listOf(textMeasurer.measure(text, beatTextStyle.copy(color = drawColor)))
+                textStyles.add(musicalTextStyle)
+                listOf(textMeasurer.measure(text, musicalTextStyle.copy(color = drawColor)))
             } else {
                 notes.map { note ->
-                    val text = when (note.type) {
-                        NoteType.Rest -> MusicalCharacters.getRestCharacter(beat.duration.value)
-                        NoteType.Dead -> MusicalCharacters.getDeadNoteCharacter()
+                    when (note.type) {
+                        NoteType.Rest -> {
+                            val text = MusicalCharacters.getRestCharacter(beat.duration.value)
+                            textStyles.add(musicalTextStyle)
+                            textMeasurer.measure(text, musicalTextStyle.copy(color = drawColor))
+                        }
+                        NoteType.Dead -> {
+                            val text = MusicalCharacters.getDeadNoteCharacter()
+                            textStyles.add(beatTextStyle)
+                            textMeasurer.measure(text, beatTextStyle.copy(color = drawColor))
+                        }
                         else -> {
-                            if (note.value == TIED_NOTE) {
+                            val text = if (note.value == TIED_NOTE) {
                                 "T"
                             } else {
                                 note.value.toString()
                             }
+                            textStyles.add(beatTextStyle)
+                            textMeasurer.measure(text, beatTextStyle.copy(color = drawColor))
                         }
                     }
-                    textMeasurer.measure(text, beatTextStyle.copy(color = drawColor))
                 }
             }
         } ?: emptyList()
@@ -88,21 +107,23 @@ fun Measure(
     ) {
         val d = density
         val yOffset = size.height / 10f
+        val multiplier = if (measure.isComplex()) complexMeasureStyleMultiplier else 1f
 
         drawMeasureHeader(headerText, textMeasurer, headerTextStyle, drawColor)
         drawStrings(stringCount, yOffset, drawColor)
 
         // Hoist density-scaled constants
-        val p1 = 1 * d
-        val p2 = 1 * d
-        val p6 = 3 * d
-        val p8 = 4 * d
-        val p10 = 5 * d
-        val p24 = 12 * d
-        val p26 = 13 * d
-        val p32 = 16 * d
-        val p40 = 20 * d
-        val p80 = 40 * d
+        val p1 = 1 * d * multiplier
+        val p2 = 1 * d * multiplier
+        val p6 = 3 * d * multiplier
+        val p8 = 4 * d * multiplier
+        val p10 = 5 * d * multiplier
+        val p24 = 12 * d * multiplier
+        val p26 = 13 * d * multiplier
+        val p32 = 16 * d * multiplier
+        val p40 = 20 * d * multiplier
+        val p60 = 30 * d * multiplier
+        val p80 = 40 * d * multiplier
 
         if (isRepeatOpen) {
             drawLine(drawColor, Offset(0f, yOffset - p1), Offset(0f, stringCount * yOffset + p1), strokeWidth = p8)
@@ -145,7 +166,7 @@ fun Measure(
                 drawBeat(
                     beat = beat,
                     textMeasurer = textMeasurer,
-                    textStyle = beatTextStyle,
+                    textStyle = textStyles.getOrNull(index) ?: beatTextStyle,
                     backgroundColor = backgroundColor,
                     color = drawColor,
                     beatOffset = currentBeatOffset,
@@ -155,8 +176,7 @@ fun Measure(
 
                 if (beat.hasPalmMute()) {
                     drawPalmMutes(
-                        stringCount = stringCount,
-                        yOffset = yOffset,
+                        yOffset = stringCount * yOffset + p60,
                         currentBeatOffset = currentBeatOffset,
                         headerTextMeasurer = textMeasurer,
                         headerTextStyle = headerTextStyle,
@@ -172,7 +192,7 @@ fun Measure(
         val beamGroups = voice?.beamGroups
         if (beamGroups != null) {
             var currentBeamOffset = p40
-            val verticalLineOffset = stringCount * yOffset + (beatTextStyle.lineHeight.value / 2f)
+            val verticalLineOffset = stringCount * yOffset + (beatTextStyle.lineHeight.value) * multiplier
             
             for (i in beamGroups.indices) {
                 val group = beamGroups[i]

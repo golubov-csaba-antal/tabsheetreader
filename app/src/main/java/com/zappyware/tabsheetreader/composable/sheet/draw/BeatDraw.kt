@@ -9,6 +9,7 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.Beat
+import com.zappyware.tabsheetreader.core.data.song.measure.beat.isRest
 
 fun DrawScope.drawBeat(
     beat: Beat,
@@ -24,7 +25,7 @@ fun DrawScope.drawBeat(
 
     // Pre-calculate the Y adjustment based on line height
     // Hoisting this calculation out of the loop
-    val yAdjustment = textStyle.lineHeight.toPx() * 0.75f
+    val yAdjustment = textStyle.lineHeight.toPx() / 2
     val notes = beat.notes
 
     if (notes.isEmpty()) {
@@ -51,7 +52,7 @@ fun DrawScope.drawBeat(
 
             val topLeft = Offset(
                 beatOffset - (width / 2f),
-                note.string * stringOffset - yAdjustment
+                (if (beat.isRest()) 3 else note.string) * stringOffset - yAdjustment
             )
 
             // Draw background rectangle to clear string lines under the note
