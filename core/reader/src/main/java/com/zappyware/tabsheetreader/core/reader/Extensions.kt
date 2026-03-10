@@ -64,12 +64,9 @@ fun InputStream.readF64(): Double {
     return java.lang.Double.longBitsToDouble(bits)
 }
 
-private const val MAX_STRING_SIZE = 1_000_000 // 1MB safety limit
-
 fun InputStream.readByteSizeString(count: Int): String {
     val actualSize = read()
     if (count <= 0) return ""
-    if (count > MAX_STRING_SIZE) throw IOException("String size too large: $count")
 
     val bytes = ByteArray(count)
     readFully(bytes, count)
@@ -84,7 +81,6 @@ fun InputStream.readIByteSizeString(): String {
 fun InputStream.readIntSizeString(): String {
     val size = readI32()
     if (size <= 0) return ""
-    if (size > MAX_STRING_SIZE) throw IOException("String size too large: $size")
     val bytes = ByteArray(size)
     readFully(bytes, size)
     return if(size == 1 && bytes[0] == 0.toByte()) "" else String(bytes, 0, size)

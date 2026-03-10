@@ -1,5 +1,7 @@
 package com.zappyware.tabsheetreader.core.data.song.measure.beat
 
+import com.zappyware.tabsheetreader.core.data.song.track.RSEInstrument
+
 data class MixTableChange(
     val instrument: MixTableItem? = null,
     val rse: RSEInstrument = RSEInstrument(),

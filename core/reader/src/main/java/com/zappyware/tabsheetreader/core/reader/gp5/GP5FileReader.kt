@@ -61,7 +61,7 @@ import com.zappyware.tabsheetreader.core.data.song.measure.beat.NoteType
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.Octaves
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.PinchHarmonic
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.PitchClass
-import com.zappyware.tabsheetreader.core.data.song.measure.beat.RSEInstrument
+import com.zappyware.tabsheetreader.core.data.song.track.RSEInstrument
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SemiHarmonic
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SlapEffects
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.SlideType
@@ -86,7 +86,6 @@ import com.zappyware.tabsheetreader.core.data.song.measure.beat.isEmpty
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.swapDirections
 import com.zappyware.tabsheetreader.core.data.song.measure.findLineBreak
 import com.zappyware.tabsheetreader.core.data.song.track.GuitarString
-import com.zappyware.tabsheetreader.core.data.song.track.Instrument
 import com.zappyware.tabsheetreader.core.data.song.track.Track
 import com.zappyware.tabsheetreader.core.data.song.track.TrackEffect
 import com.zappyware.tabsheetreader.core.data.song.track.TrackSettings
@@ -280,6 +279,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         var currentTimeSignature: TimeSignature? = null
         var previousTimeSignature: TimeSignature? = null
         return List(measureCount) { index ->
+            if (index != 0) inputStream.skip(1)
             flags = inputStream.readU8()
             MeasureHeader(
                 number = index + 1,
@@ -305,7 +305,6 @@ class GP5FileReader @Inject constructor(): IFileReader {
                 previousHeader = it
                 previousTimeSignature = it.timeSignature
                 start += it.length
-                inputStream.skip(1)
             }
         }
     }
@@ -321,7 +320,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         var settingsFlags: Int
         var stringCount: Int
         return List(tracksCount) { index ->
-            if (isVersion5_0_0 && index == 0) inputStream.skip(1)
+            if (isVersion5_0_0 || index == 0) inputStream.skip(1)
             flags = inputStream.readU8()
             Track(
                 number = index + 1,
@@ -359,19 +358,14 @@ class GP5FileReader @Inject constructor(): IFileReader {
                     extendRhythmic = settingsFlags and 0x0800 == 0x0800,
                 ),
                 rse = TrackEffect(
-                    autoAccentuation = findAccentuation(inputStream.readU8()).also { inputStream.skip(1) },
+                    autoAccentuation = findAccentuation(inputStream.readU8()).also { inputStream.readU8() },
                     humanize = inputStream.readU8().also {
                         inputStream.readI32()
                         inputStream.readI32()
                         inputStream.readI32()
                         inputStream.skip(12)
                     },
-                    instrument = Instrument(
-                        instrument = inputStream.readI32(),
-                        unknown = inputStream.readI32(),
-                        soundBank = inputStream.readI32(),
-                        effectNumber = if (isVersion5_0_0) inputStream.readI16().also { inputStream.skip(1) } else inputStream.readI32(),
-                    ),
+                    instrument = readRSEInstrument(inputStream),
                     equalizer = if (hasMasterEffect) readEqualizer(inputStream, 4) else Equalizer.Default,
                     effectCategory = if (hasMasterEffect) inputStream.readIByteSizeString() else null,
                     effect = if (hasMasterEffect) inputStream.readIByteSizeString() else null,
@@ -460,7 +454,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         val notes = mutableListOf<Note>()
 
         voice.measure.track.strings.forEach { string ->
-            if ((stringFlags and (1 shl 7 - string.number)) != 0) {
+            if ((stringFlags and (1 shl (7 - string.number))) != 0) {
                 notes.add(readNote(inputStream, string, partialBeat))
             }
         }
@@ -892,8 +886,8 @@ class GP5FileReader @Inject constructor(): IFileReader {
     }
 
     private fun readHarmonic(inputStream: InputStream): HarmonicEffect? {
-        val value = inputStream.readU8()
-        return when(value) {
+        val type = inputStream.readI8()
+        return when(type) {
             1 -> NaturalHarmonic
             2 -> ArtificialHarmonic(
                 PitchClass(
