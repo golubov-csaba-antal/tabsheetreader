@@ -14,8 +14,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,9 +47,14 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             TabSheetReaderTheme {
-                val backStack = rememberSaveable { mutableStateListOf<Any>(Info) }
+                val backStack = rememberSaveable(
+                    saver = listSaver(
+                        save = { it.toList() },
+                        restore = { it.toMutableStateList() }
+                    )
+                ) { mutableStateListOf<Any>(Track) }
 
-                var selectedMenuIndex by rememberSaveable { mutableIntStateOf(0) }
+                var selectedMenuIndex by rememberSaveable { mutableIntStateOf(1) }
 
                 var isTrackSelectionMenuExpanded by remember { mutableStateOf(false) }
 

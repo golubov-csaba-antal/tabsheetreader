@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.hilt)
     id("com.google.devtools.ksp")
+    id("kotlin-parcelize")
 }
 
 android {
