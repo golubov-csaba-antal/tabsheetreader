@@ -4,11 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.style.TextAlign
-import com.zappyware.tabsheetreader.core.data.song.header.TimeSignature
 
 fun DrawScope.drawVerticalLine(
     drawColor: Color,
@@ -150,77 +146,55 @@ fun DrawScope.drawRepeat(
 }
 
 fun DrawScope.drawRepeatTimes(
-    repeatClose: Int,
-    textMeasurer: TextMeasurer,
-    repeatCloseTextStyle: TextStyle,
+    layoutResult: TextLayoutResult,
     drawColor: Color
 ) {
-    val text = "${repeatClose}x"
-    val textStyle = repeatCloseTextStyle.copy(
-        color = drawColor,
-        textAlign = TextAlign.Right
-    )
     drawText(
-        textMeasurer = textMeasurer,
-        text = text,
-        topLeft = Offset(size.width - textMeasurer.measure(text, textStyle).size.width, 0f),
-        style = textStyle
+        textLayoutResult = layoutResult,
+        topLeft = Offset(size.width - layoutResult.size.width, 0f),
+        color = drawColor
     )
 }
 
 fun DrawScope.drawTimeSignature(
-    timeSignature: TimeSignature?,
-    textMeasurer: TextMeasurer,
-    timeSignatureTextStyle: TextStyle,
+    numeratorLayout: TextLayoutResult,
+    denominatorLayout: TextLayoutResult,
     horizontalSpace: Float,
     stringCount: Int,
     stringDistance: Float,
     drawColor: Color,
 ) {
-    timeSignature?.let {
-        drawText(
-            textMeasurer = textMeasurer,
-            text = "${it.numerator}",
-            topLeft = Offset(
-                x = horizontalSpace,
-                y = (stringCount * stringDistance / 2f) - stringDistance
-            ),
-            style = timeSignatureTextStyle.copy(
-                color = drawColor
-            )
-        )
-        drawText(
-            textMeasurer = textMeasurer,
-            text = "${it.denominator.value}",
-            topLeft = Offset(
-                x = horizontalSpace,
-                y = (stringCount * stringDistance + stringDistance) / 2f
-            ),
-            style = timeSignatureTextStyle.copy(
-                color = drawColor
-            )
-        )
-    }
+    drawText(
+        textLayoutResult = numeratorLayout,
+        topLeft = Offset(
+            x = horizontalSpace,
+            y = (stringCount * stringDistance / 2f) - stringDistance
+        ),
+        color = drawColor
+    )
+    drawText(
+        textLayoutResult = denominatorLayout,
+        topLeft = Offset(
+            x = horizontalSpace,
+            y = (stringCount * stringDistance + stringDistance) / 2f
+        ),
+        color = drawColor
+    )
 }
 
 fun DrawScope.drawPalmMutes(
     yOffset: Float,
     currentBeatOffset: Float,
-    headerTextMeasurer: TextMeasurer,
-    headerTextStyle: TextStyle,
     color: Color,
-    drawnPalmMute: Boolean,
-    layoutResult: TextLayoutResult?,
+    pmLayoutResult: TextLayoutResult,
+    noteLayoutResult: TextLayoutResult?,
 ) {
     drawText(
-        textMeasurer = headerTextMeasurer,
-        text = if (drawnPalmMute) "\u2014" else "PM",
+        textLayoutResult = pmLayoutResult,
         topLeft = Offset(
-            x = currentBeatOffset - (layoutResult?.size?.width ?: 0) / 2f,
+            x = currentBeatOffset - (noteLayoutResult?.size?.width ?: 0) / 2f,
             y = yOffset
         ),
-        style = headerTextStyle.copy(
-            color = color,
-        ),
+        color = color,
     )
 }

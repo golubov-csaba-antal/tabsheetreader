@@ -9,7 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import com.zappyware.tabsheetreader.MusicalCharacters
@@ -51,7 +50,6 @@ fun Measure(
         if (measureTitle.isNullOrEmpty()) "$measureIndex" else "$measureIndex - $measureTitle"
     }
 
-    // A single text measurer can handle all text layouts
     val textMeasurer = rememberTextMeasurer()
     
     val headerTextStyle = typography.headlineSmall
@@ -65,40 +63,44 @@ fun Measure(
 
     val voice = measure.voices.firstOrNull()
 
-    val textStyles = mutableListOf<TextStyle>()
+    // Pre-calculate layouts for everything that requires text measurement
+    val repeatCloseLayout = remember(repeatClose, drawColor) {
+        if (repeatClose > 0) textMeasurer.measure("${repeatClose}x", repeatCloseTextStyle.copy(color = drawColor)) else null
+    }
+
+    val repeatAlternativesLayout = remember(repeatAlternatives, drawColor) {
+        if (!repeatAlternatives.isNullOrEmpty()) textMeasurer.measure(repeatAlternatives, repeatCloseTextStyle.copy(color = drawColor)) else null
+    }
+
+    val timeSignatureLayouts = remember(timeSignature, drawColor) {
+        timeSignature?.let {
+            textMeasurer.measure("${it.numerator}", timeSignatureTextStyle.copy(color = drawColor)) to
+            textMeasurer.measure("${it.denominator.value}", timeSignatureTextStyle.copy(color = drawColor))
+        }
+    }
+
+    val pmLayout = remember(drawColor) {
+        textMeasurer.measure("PM", headerTextStyle.copy(color = drawColor))
+    }
     
-    // Pre-calculate text layouts for beats to avoid measuring during Draw phase
+    val pmDashLayout = remember(drawColor) {
+        textMeasurer.measure("\u2014", headerTextStyle.copy(color = drawColor))
+    }
+
     val beatLayouts = remember(voice, drawColor) {
-        textStyles.clear()
         voice?.beats?.map { beat ->
             val notes = beat.notes
             if (notes.isEmpty()) {
                 val text = MusicalCharacters.getRestCharacter(beat.duration.value)
-                textStyles.add(musicalTextStyle)
                 listOf(textMeasurer.measure(text, musicalTextStyle.copy(color = drawColor)))
             } else {
                 notes.map { note ->
-                    when (note.type) {
-                        NoteType.Rest -> {
-                            val text = MusicalCharacters.getRestCharacter(beat.duration.value)
-                            textStyles.add(musicalTextStyle)
-                            textMeasurer.measure(text, musicalTextStyle.copy(color = drawColor))
-                        }
-                        NoteType.Dead -> {
-                            val text = MusicalCharacters.getDeadNoteCharacter()
-                            textStyles.add(beatTextStyle)
-                            textMeasurer.measure(text, beatTextStyle.copy(color = drawColor))
-                        }
-                        else -> {
-                            val text = if (note.value == TIED_NOTE) {
-                                "T"
-                            } else {
-                                note.value.toString()
-                            }
-                            textStyles.add(beatTextStyle)
-                            textMeasurer.measure(text, beatTextStyle.copy(color = drawColor))
-                        }
+                    val (text, style) = when (note.type) {
+                        NoteType.Rest -> MusicalCharacters.getRestCharacter(beat.duration.value) to musicalTextStyle
+                        NoteType.Dead -> MusicalCharacters.getDeadNoteCharacter() to beatTextStyle
+                        else -> (if (note.value == TIED_NOTE) "T" else note.value.toString()) to beatTextStyle
                     }
+                    textMeasurer.measure(text, style.copy(color = drawColor))
                 }
             }
         } ?: emptyList()
@@ -114,11 +116,10 @@ fun Measure(
         drawStrings(stringCount, yOffset, drawColor)
 
         // Hoist density-scaled constants
-        val p2 = 1 * d
+        val p2 = 2 * d
         val p6 = 3 * d
         val p8 = 4 * d
         val p26 = 13 * d
-        val p32 = 16 * d
         val p40 = 20 * d
         val p60 = 30 * d
         val p80 = 40 * d
@@ -161,12 +162,9 @@ fun Measure(
                     thinLineWidth = p2,
                     circleRadius = p6,
                 )
-                drawRepeatTimes(
-                    repeatClose,
-                    textMeasurer,
-                    repeatCloseTextStyle,
-                    drawColor,
-                )
+                repeatCloseLayout?.let {
+                    drawRepeatTimes(it, drawColor)
+                }
             }
         } else {
             drawVerticalLine(
@@ -178,23 +176,24 @@ fun Measure(
             )
         }
 
-        if (!repeatAlternatives.isNullOrEmpty()) {
-            drawText(textMeasurer = textMeasurer, text = repeatAlternatives, topLeft = Offset(size.width / 2f - p32, 0f), style = repeatCloseTextStyle.copy(color = drawColor))
+        repeatAlternativesLayout?.let {
+            drawText(textLayoutResult = it, topLeft = Offset(size.width / 2f - it.size.width / 2f, 0f), color = drawColor)
         }
 
-        drawTimeSignature(
-            timeSignature = timeSignature,
-            textMeasurer = textMeasurer,
-            timeSignatureTextStyle = timeSignatureTextStyle,
-            horizontalSpace = yOffset,
-            stringCount = stringCount,
-            stringDistance = yOffset,
-            drawColor = drawColor,
-        )
+        timeSignatureLayouts?.let { (num, den) ->
+            drawTimeSignature(
+                numeratorLayout = num,
+                denominatorLayout = den,
+                horizontalSpace = yOffset,
+                stringCount = stringCount,
+                stringDistance = yOffset,
+                drawColor = drawColor,
+            )
+        }
 
         val beatAreaWidth = size.width - p80
         val beats = voice?.beats
-        var drawnPalmMute = false
+        var pmActive = false
         
         if (beats != null) {
             var currentBeatOffset = drawStartingOffsetX
@@ -203,7 +202,7 @@ fun Measure(
                 drawBeat(
                     beat = beat,
                     textMeasurer = textMeasurer,
-                    textStyle = textStyles.getOrNull(index) ?: beatTextStyle,
+                    textStyle = beatTextStyle, // This is just a fallback now
                     backgroundColor = backgroundColor,
                     color = drawColor,
                     beatOffset = currentBeatOffset,
@@ -212,18 +211,17 @@ fun Measure(
                 )
 
                 if (beat.hasPalmMute()) {
+                    val pmLayoutToUse = if (pmActive) pmDashLayout else pmLayout
                     drawPalmMutes(
                         yOffset = stringCount * yOffset + p80,
                         currentBeatOffset = currentBeatOffset,
-                        headerTextMeasurer = textMeasurer,
-                        headerTextStyle = headerTextStyle,
                         color = drawColor,
-                        drawnPalmMute = drawnPalmMute,
-                        layoutResult = beatLayouts.getOrNull(index)?.firstOrNull(),
+                        pmLayoutResult = pmLayoutToUse,
+                        noteLayoutResult = beatLayouts.getOrNull(index)?.firstOrNull(),
                     )
-                    drawnPalmMute = true
+                    pmActive = true
                 } else {
-                    drawnPalmMute = false
+                    pmActive = false
                 }
 
                 currentBeatOffset += beatAreaWidth / beat.duration.value
@@ -245,7 +243,6 @@ fun Measure(
                     beatAreaWidth = beatAreaWidth,
                 )
                 
-                // Optimized group offset calculation without fold/lambda
                 val groupBeams = group.beams
                 var groupDurationSum = 0f
                 for (j in groupBeams.indices) {
