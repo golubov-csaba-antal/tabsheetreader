@@ -13,14 +13,17 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import com.zappyware.tabsheetreader.MusicalCharacters
-import com.zappyware.tabsheetreader.composable.common.changeFontSizeForMeasure
-import com.zappyware.tabsheetreader.composable.common.complexMeasureStyleMultiplier
-import com.zappyware.tabsheetreader.composable.common.isComplex
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawBeams
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawBeat
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawMeasureHeader
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawPalmMutes
+import com.zappyware.tabsheetreader.composable.sheet.draw.drawRepeat
+import com.zappyware.tabsheetreader.composable.sheet.draw.drawRepeatOpen
+import com.zappyware.tabsheetreader.composable.sheet.draw.drawRepeatTimes
+import com.zappyware.tabsheetreader.composable.sheet.draw.drawSongClosure
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawStrings
+import com.zappyware.tabsheetreader.composable.sheet.draw.drawTimeSignature
+import com.zappyware.tabsheetreader.composable.sheet.draw.drawVerticalLine
 import com.zappyware.tabsheetreader.core.data.song.measure.Measure
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.NoteType
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.TIED_NOTE
@@ -51,11 +54,11 @@ fun Measure(
     // A single text measurer can handle all text layouts
     val textMeasurer = rememberTextMeasurer()
     
-    val headerTextStyle = typography.headlineSmall.changeFontSizeForMeasure(measure)
-    val timeSignatureTextStyle = typography.displayMedium.changeFontSizeForMeasure(measure)
-    val repeatCloseTextStyle = typography.labelSmall.changeFontSizeForMeasure(measure)
-    val beatTextStyle = typography.bodySmall.changeFontSizeForMeasure(measure)
-    val musicalTextStyle = typography.bodyMedium.changeFontSizeForMeasure(measure)
+    val headerTextStyle = typography.headlineSmall
+    val timeSignatureTextStyle = typography.displayMedium
+    val repeatCloseTextStyle = typography.labelSmall
+    val beatTextStyle = typography.bodySmall
+    val musicalTextStyle = typography.bodyMedium
 
     val backgroundColor = MaterialTheme.colorScheme.background
     val drawColor = if (isSystemInDarkTheme()) Color.White else Color.Black
@@ -105,56 +108,89 @@ fun Measure(
         modifier = modifier,
     ) {
         val d = density
-        val yOffset = size.height / 10f
-        val multiplier = if (measure.isComplex()) complexMeasureStyleMultiplier else 1f
+        val yOffset = 148 * d / 10f
 
         drawMeasureHeader(headerText, textMeasurer, headerTextStyle, drawColor)
         drawStrings(stringCount, yOffset, drawColor)
 
         // Hoist density-scaled constants
-        val p1 = 1 * d * multiplier
-        val p2 = 1 * d * multiplier
-        val p6 = 3 * d * multiplier
-        val p8 = 4 * d * multiplier
-        val p10 = 5 * d * multiplier
-        val p24 = 12 * d * multiplier
-        val p26 = 13 * d * multiplier
-        val p32 = 16 * d * multiplier
-        val p40 = 20 * d * multiplier
-        val p60 = 30 * d * multiplier
-        val p80 = 40 * d * multiplier
+        val p2 = 1 * d
+        val p6 = 3 * d
+        val p8 = 4 * d
+        val p26 = 13 * d
+        val p32 = 16 * d
+        val p40 = 20 * d
+        val p60 = 30 * d
+        val p80 = 40 * d
         val drawStartingOffsetX = if (measure.header.timeSignatureChanged) p80 else if (isRepeatOpen) p60 else p40
 
         if (isRepeatOpen) {
-            drawLine(drawColor, Offset(0f, yOffset - p1), Offset(0f, stringCount * yOffset + p1), strokeWidth = p8)
-            drawLine(drawColor, Offset(p10, yOffset), Offset(p10, stringCount * yOffset), strokeWidth = p2)
-            drawCircle(drawColor, p6, Offset(p24, ((stringCount + 1f) * yOffset / 2f) - p26))
-            drawCircle(drawColor, p6, Offset(p24, ((stringCount + 1f) * yOffset / 2f) + p26))
+            drawRepeatOpen(
+                stringCount = stringCount,
+                stringDistance = yOffset,
+                drawColor = drawColor,
+                thickLineWidth = p8,
+                thinLineWidth = p2,
+                circleRadius = p6,
+            )
         } else {
-            drawLine(drawColor, Offset(0f, yOffset), Offset(0f, stringCount * yOffset), strokeWidth = p2)
+            drawVerticalLine(
+                stringCount = stringCount,
+                startingOffset = 0f,
+                stringDistance = yOffset,
+                drawColor = drawColor,
+                lineWidth = p2,
+            )
         }
 
         if (isLastMeasure || repeatClose > 0) {
-            drawLine(drawColor, Offset(size.width - p10, yOffset), Offset(size.width - p10, stringCount * yOffset), strokeWidth = p2)
-            drawLine(drawColor, Offset(size.width, yOffset - p1), Offset(size.width, stringCount * yOffset + p2), strokeWidth = p8)
+            drawSongClosure(
+                stringCount = stringCount,
+                stringDistance = yOffset,
+                drawColor = drawColor,
+                thickLineWidth = p8,
+                thinLineWidth = p2,
+            )
 
             if (repeatClose > 0) {
-                drawCircle(drawColor, p6, Offset(size.width - p24, ((stringCount + 1f) * yOffset / 2f) - p26))
-                drawCircle(drawColor, p6, Offset(size.width - p24, ((stringCount + 1f) * yOffset / 2f) + p26))
-                drawText(textMeasurer = textMeasurer, text = "${repeatClose}x", topLeft = Offset(size.width - p32, 0f), style = repeatCloseTextStyle.copy(color = drawColor))
+                drawRepeat(
+                    stringCount = stringCount,
+                    stringDistance = yOffset,
+                    drawColor = drawColor,
+                    thickLineWidth = p8,
+                    thinLineWidth = p2,
+                    circleRadius = p6,
+                )
+                drawRepeatTimes(
+                    repeatClose,
+                    textMeasurer,
+                    repeatCloseTextStyle,
+                    drawColor,
+                )
             }
         } else {
-            drawLine(drawColor, Offset(size.width, yOffset), Offset(size.width, stringCount * yOffset), strokeWidth = p2)
+            drawVerticalLine(
+                stringCount = stringCount,
+                startingOffset = size.width,
+                stringDistance = yOffset,
+                drawColor = drawColor,
+                lineWidth = p2,
+            )
         }
 
         if (!repeatAlternatives.isNullOrEmpty()) {
             drawText(textMeasurer = textMeasurer, text = repeatAlternatives, topLeft = Offset(size.width / 2f - p32, 0f), style = repeatCloseTextStyle.copy(color = drawColor))
         }
 
-        timeSignature?.let {
-            drawText(textMeasurer, "${it.numerator}", Offset(yOffset, ((stringCount + .5f) * yOffset / 2f) - timeSignatureTextStyle.lineHeight.value), timeSignatureTextStyle.copy(color = drawColor))
-            drawText(textMeasurer, "${it.denominator.value}", Offset(yOffset, (stringCount + .5f) * yOffset / 2f), timeSignatureTextStyle.copy(color = drawColor))
-        }
+        drawTimeSignature(
+            timeSignature = timeSignature,
+            textMeasurer = textMeasurer,
+            timeSignatureTextStyle = timeSignatureTextStyle,
+            horizontalSpace = yOffset,
+            stringCount = stringCount,
+            stringDistance = yOffset,
+            drawColor = drawColor,
+        )
 
         val beatAreaWidth = size.width - p80
         val beats = voice?.beats
@@ -177,11 +213,11 @@ fun Measure(
 
                 if (beat.hasPalmMute()) {
                     drawPalmMutes(
-                        yOffset = stringCount * yOffset + p60,
+                        yOffset = stringCount * yOffset + p80,
                         currentBeatOffset = currentBeatOffset,
                         headerTextMeasurer = textMeasurer,
                         headerTextStyle = headerTextStyle,
-                        drawColor = drawColor,
+                        color = drawColor,
                         drawnPalmMute = drawnPalmMute,
                         layoutResult = beatLayouts.getOrNull(index)?.firstOrNull(),
                     )
@@ -197,7 +233,7 @@ fun Measure(
         val beamGroups = voice?.beamGroups
         if (beamGroups != null) {
             var currentBeamOffset = drawStartingOffsetX
-            val verticalLineOffset = stringCount * yOffset + (beatTextStyle.lineHeight.value) * multiplier
+            val verticalLineOffset = stringCount * yOffset + p26
             
             for (i in beamGroups.indices) {
                 val group = beamGroups[i]

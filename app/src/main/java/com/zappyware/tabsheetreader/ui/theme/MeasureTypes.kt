@@ -42,8 +42,8 @@ object MeasureTypography {
         bodySmall = TextStyle(
             fontFamily = CustomFont,
             fontWeight = FontWeight.Normal,
-            fontSize = 12.sp,
-            lineHeight = 12.sp,
+            fontSize = 16.sp,
+            lineHeight = 16.sp,
             letterSpacing = 0.sp,
         ),
         bodyMedium = TextStyle(
@@ -87,8 +87,8 @@ object MeasureTypography {
         bodySmall = TextStyle(
             fontFamily = CustomFont,
             fontWeight = FontWeight.Normal,
-            fontSize = 10.sp,
-            lineHeight = 10.sp,
+            fontSize = 14.sp,
+            lineHeight = 14.sp,
             letterSpacing = 0.sp,
         ),
         bodyMedium = TextStyle(

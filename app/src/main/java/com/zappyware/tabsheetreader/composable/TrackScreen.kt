@@ -2,6 +2,7 @@ package com.zappyware.tabsheetreader.composable
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -77,7 +78,7 @@ fun TrackScreen(
                     measureCount = trackMeasures.size,
                     selectedTrack = selectedTrack,
                     stringCount = selectedTrack?.stringCount ?: DEFAULT_STRING_COUNT,
-                    modifier = Modifier.aspectRatio(1.77f, false),
+                    modifier = Modifier.height(172.dp),
                     typography = MeasureTypography.getTypography(windowSizeClass)
                 )
             }

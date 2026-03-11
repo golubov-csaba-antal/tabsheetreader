@@ -22,12 +22,12 @@ fun DrawScope.drawBeams(
     // Cache density-scaled constants
     val strokeWidthLarge = 2 * d
     val strokeWidthSmall = 1 * d
-    val beamOffsetAmount = 4 * d
+    val beamOffsetAmount = 8 * d
     
     // Optimized vertical spacing:
     // We use a fixed gap and base position to keep all beams below verticalOffset
     // and ensure uniform spacing between subdivision levels.
-    val beamGap = 4 * d
+    val beamGap = 5 * d
     val yBaseBeam = verticalOffset + 20 * d
 
     var currentX = beatOffset
