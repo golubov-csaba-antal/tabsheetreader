@@ -5,7 +5,7 @@ import com.zappyware.tabsheetreader.core.data.song.measure.beat.Beat
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.VoiceDirections
 
 data class Voice(
-    val measure: Measure,
+    val measureNumber: Int,
     val beats: List<Beat> = emptyList(),
     val beamGroups: List<BeamGroup> = emptyList(),
     val directions: VoiceDirections = VoiceDirections.None,

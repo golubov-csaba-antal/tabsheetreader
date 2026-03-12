@@ -33,7 +33,6 @@ import com.zappyware.tabsheetreader.core.data.song.header.findTripletFeel
 import com.zappyware.tabsheetreader.core.data.song.header.length
 import com.zappyware.tabsheetreader.core.data.song.header.time
 import com.zappyware.tabsheetreader.core.data.song.isVersion5_0_0
-import com.zappyware.tabsheetreader.core.data.song.measure.LineBreak
 import com.zappyware.tabsheetreader.core.data.song.measure.Measure
 import com.zappyware.tabsheetreader.core.data.song.measure.MeasureClef
 import com.zappyware.tabsheetreader.core.data.song.measure.Voice
@@ -379,59 +378,56 @@ class GP5FileReader @Inject constructor(): IFileReader {
             val header = headers[index / tracksCount]
             val track = tracks[index % tracksCount]
 
-            val partialMeasure = Measure(
-                header = header,
-                track = track,
+            Measure(
+                headerNumber = header.number,
+                trackNumber = track.number,
                 clef = MeasureClef.Treble,
-                lineBreak = LineBreak.None,
-                voices = emptyList()
+                voices = List(2) { 
+                    readVoice(inputStream, header.start, header.timeSignature, header.number, track.strings)
+                },
+                lineBreak = findLineBreak(inputStream.readU8()),
             )
-
-            val voices = List(2) { readVoice(inputStream, partialMeasure) }
-
-            val lineBreak = findLineBreak(inputStream.readU8())
-            partialMeasure.copy(voices = voices, lineBreak = lineBreak)
         }
     }
 
-    private fun readVoice(inputStream: InputStream, measure: Measure): Voice {
-        val partialVoice = Voice(
-            measure = measure,
-            beats = emptyList(),
-            directions = VoiceDirections.None
-        )
-
-        var start = measure.header.start
+    private fun readVoice(
+        inputStream: InputStream,
+        headerStart: Int,
+        timeSignature: TimeSignature,
+        measureNumber: Int,
+        strings: List<GuitarString>
+    ): Voice {
+        var start = headerStart
         val beatsCount = inputStream.readI32()
-        val beats = List(beatsCount) {
-            readBeat(inputStream, start, partialVoice).also {
-                start += if (it.status != BeatStatuses.Empty) {
-                    it.duration.time
-                } else {
-                    0
+        
+        var beats: List<Beat>
+
+        return Voice(
+            measureNumber = measureNumber,
+            beats = List(beatsCount) {
+                readBeat(inputStream, start, strings).also {
+                    start += if (it.status != BeatStatuses.Empty) {
+                        it.duration.time
+                    } else {
+                        0
+                    }
                 }
-            }
-        }
-
-        val beamGroups = BeamHandler.createBeamGroups(beats, measure.header.timeSignature)
-
-        return partialVoice.copy(
-            beats = beats,
-            beamGroups = beamGroups
+            }.also { beats = it },
+            directions = VoiceDirections.None,
+            beamGroups = BeamHandler.createBeamGroups(beats, timeSignature)
         )
     }
 
-    private fun readBeat(inputStream: InputStream, start: Int, voice: Voice): Beat {
+    private fun readBeat(inputStream: InputStream, start: Int, strings: List<GuitarString>): Beat {
         val flags = inputStream.readU8()
 
         var partialBeat = Beat(
             start = start,
-            voice = voice,
             status = if (flags and 0x40 == 0x40) findBeatStatuses(inputStream.readU8()) else BeatStatuses.Normal,
             duration = readDuration(inputStream, flags),
             effect = if (flags and 0x02 == 0x02) {
                 BeatEffect(
-                    chord = readChord(inputStream, voice.measure.track.strings.size)
+                    chord = readChord(inputStream, strings.size)
                 )
             } else {
                 BeatEffect.NONE
@@ -440,7 +436,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
         )
 
         if (flags and 0x08 == 0x08) {
-            val chord = readChord(inputStream, voice.measure.track.strings.size)
+            val chord = readChord(inputStream, strings.size)
             val beatEffect = readBeatEffect(inputStream)
             partialBeat = partialBeat.copy(effect = beatEffect.copy(chord = chord))
         }
@@ -453,9 +449,9 @@ class GP5FileReader @Inject constructor(): IFileReader {
         val stringFlags = inputStream.readU8()
         val notes = mutableListOf<Note>()
 
-        voice.measure.track.strings.forEach { string ->
+        strings.forEach { string ->
             if ((stringFlags and (1 shl (7 - string.number))) != 0) {
-                notes.add(readNote(inputStream, string, partialBeat))
+                notes.add(readNote(inputStream, string))
             }
         }
 
@@ -770,7 +766,7 @@ class GP5FileReader @Inject constructor(): IFileReader {
             display = flags and 0x80 == 0x80
         )
 
-    private fun readNote(inputStream: InputStream, string: GuitarString, beat: Beat): Note {
+    private fun readNote(inputStream: InputStream, string: GuitarString): Note {
         val flag = inputStream.readU8()
         val noteType = if (flag and 0x20 == 0x20) findNoteType(inputStream.readU8()) else NoteType.Normal
         val velocity = if (flag and 0x10 == 0x10) inputStream.readI8().toVelocity() else Velocities.DEFAULT
@@ -823,7 +819,6 @@ class GP5FileReader @Inject constructor(): IFileReader {
         }
 
         return Note(
-            beat = beat,
             string = string.number,
             effect = effect,
             type = noteType,

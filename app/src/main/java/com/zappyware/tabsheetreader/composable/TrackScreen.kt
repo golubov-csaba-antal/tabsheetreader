@@ -29,6 +29,8 @@ fun TrackScreen(
     modifier: Modifier = Modifier,
     windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
 ) {
+    val measureHeaders by viewModel.measureHeaders.collectAsStateWithLifecycle()
+
     val measures by viewModel.measures.collectAsStateWithLifecycle()
 
     val tempo by viewModel.tempo.collectAsStateWithLifecycle()
@@ -41,7 +43,7 @@ fun TrackScreen(
 
     val displayMoreCells = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
-    val trackMeasures = measures.filter { it.track == selectedTrack }
+    val trackMeasures = measures.filter { it.trackNumber == selectedTrack?.number }
 
     if (trackMeasures.isEmpty()) {
         Text(
@@ -54,7 +56,7 @@ fun TrackScreen(
             contentPadding = PaddingValues(24.dp)
         ) {
             item(
-                contentType = ITEM_TYPE_INFO,
+                contentType = ItemTypeInfo,
                 span = { GridItemSpan(maxLineSpan) }
             ) {
                 MeasureInfo(
@@ -63,7 +65,7 @@ fun TrackScreen(
                 )
             }
             items(
-                contentType = { ITEM_TYPE_MEASURE },
+                contentType = { ItemTypeMeasure },
                 items = trackMeasures,
                 span = { measure ->
                     if (!displayMoreCells && measure.isComplex()) {
@@ -74,6 +76,7 @@ fun TrackScreen(
                 }
             ) { measure ->
                 Measure(
+                    measureHeader = measureHeaders.first { it.number == measure.headerNumber },
                     measure = measure,
                     measureCount = trackMeasures.size,
                     selectedTrack = selectedTrack,
@@ -88,5 +91,5 @@ fun TrackScreen(
 
 private const val DEFAULT_STRING_COUNT = 6
 
-private object ITEM_TYPE_INFO
-private object ITEM_TYPE_MEASURE
+private object ItemTypeInfo
+private object ItemTypeMeasure

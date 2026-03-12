@@ -23,6 +23,7 @@ import com.zappyware.tabsheetreader.composable.sheet.draw.drawSongClosure
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawStrings
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawTimeSignature
 import com.zappyware.tabsheetreader.composable.sheet.draw.drawVerticalLine
+import com.zappyware.tabsheetreader.core.data.song.header.MeasureHeader
 import com.zappyware.tabsheetreader.core.data.song.measure.Measure
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.NoteType
 import com.zappyware.tabsheetreader.core.data.song.measure.beat.TIED_NOTE
@@ -31,6 +32,7 @@ import com.zappyware.tabsheetreader.core.data.song.track.Track
 
 @Composable
 fun Measure(
+    measureHeader: MeasureHeader,
     measure: Measure,
     measureCount: Int,
     selectedTrack: Track?,
@@ -38,13 +40,13 @@ fun Measure(
     modifier: Modifier,
     typography: Typography,
 ) {
-    val measureIndex = measure.header.number
-    val measureTitle = measure.header.marker?.title
-    val timeSignature = if (measure.header.timeSignatureChanged) measure.header.timeSignature else null
-    val isLastMeasure = measure.header.number == measureCount
-    val isRepeatOpen = measure.header.isRepeatOpen
-    val repeatClose = measure.header.repeatClose
-    val repeatAlternatives = measure.header.repeatAlternatives
+    val measureIndex = measureHeader.number
+    val measureTitle = measureHeader.marker?.title
+    val timeSignature = if (measureHeader.timeSignatureChanged) measureHeader.timeSignature else null
+    val isLastMeasure = measureHeader.number == measureCount
+    val isRepeatOpen = measureHeader.isRepeatOpen
+    val repeatClose = measureHeader.repeatClose
+    val repeatAlternatives = measureHeader.repeatAlternatives
 
     val headerText = remember(measureIndex, measureTitle) {
         if (measureTitle.isNullOrEmpty()) "$measureIndex" else "$measureIndex - $measureTitle"
@@ -123,7 +125,7 @@ fun Measure(
         val p40 = 20 * d
         val p60 = 30 * d
         val p80 = 40 * d
-        val drawStartingOffsetX = if (measure.header.timeSignatureChanged) p80 else if (isRepeatOpen) p60 else p40
+        val drawStartingOffsetX = if (measureHeader.timeSignatureChanged) p80 else if (isRepeatOpen) p60 else p40
 
         if (isRepeatOpen) {
             drawRepeatOpen(

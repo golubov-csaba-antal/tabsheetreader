@@ -4,8 +4,8 @@ import com.zappyware.tabsheetreader.core.data.song.header.MeasureHeader
 import com.zappyware.tabsheetreader.core.data.song.track.Track
 
 data class Measure(
-    val header: MeasureHeader,
-    val track: Track,
+    val headerNumber: Int,
+    val trackNumber: Int,
     val clef: MeasureClef,
     val lineBreak: LineBreak,
     val voices: List<Voice>,

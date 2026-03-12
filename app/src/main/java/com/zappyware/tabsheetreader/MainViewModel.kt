@@ -6,6 +6,7 @@ import com.zappyware.tabsheetreader.core.data.song.FileVersion
 import com.zappyware.tabsheetreader.core.data.song.Lyrics
 import com.zappyware.tabsheetreader.core.data.song.SongInfo
 import com.zappyware.tabsheetreader.core.data.song.Tempo
+import com.zappyware.tabsheetreader.core.data.song.header.MeasureHeader
 import com.zappyware.tabsheetreader.core.data.song.measure.Measure
 import com.zappyware.tabsheetreader.core.data.song.track.Track
 import com.zappyware.tabsheetreader.core.reader.IFileReader
@@ -38,6 +39,9 @@ class MainViewModel @Inject constructor(
     private val _tempo = MutableStateFlow<Tempo?>(null)
     val tempo: StateFlow<Tempo?> = _tempo.asStateFlow()
 
+    private val _measureHeaders = MutableStateFlow<List<MeasureHeader>>(emptyList())
+    val measureHeaders: StateFlow<List<MeasureHeader>> = _measureHeaders.asStateFlow()
+
     private val _measures = MutableStateFlow<List<Measure>>(emptyList())
     val measures: StateFlow<List<Measure>> = _measures.asStateFlow()
 
@@ -50,6 +54,7 @@ class MainViewModel @Inject constructor(
                 _lyrics.emit(song.lyrics)
                 _tracks.emit(song.tracks)
                 _tempo.emit(song.tempo)
+                _measureHeaders.emit(song.measureHeaders)
                 _measures.emit(song.measures)
             }
         }
